@@ -1,0 +1,26 @@
+\name{wide_by_site}
+\alias{wide_by_site}
+\title{Change long table into wide table for each site}
+\usage{
+wide_by_site(df)
+}
+\arguments{
+  \item{df}{data frame of vegtation data. Should have site,
+  quad, sp columns.}
+}
+\value{
+list.
+}
+\description{
+Produce wide quad by species data frame for each site from
+long table in a list. Each element of the list is a quadrat
+by species data frame.
+}
+\details{
+\code{wide_by_site} to change from long table to wide table
+for each site
+}
+\author{
+Daijiang Li
+}
+
