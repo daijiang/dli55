@@ -4,6 +4,7 @@ This package contains R functions collected or wrote by Daijiang Li. By putting 
 
 ## Installation
 To install this package, just run:
+
     library(devtools)
     install_github("dli55", "daijiang")
     
