@@ -7,4 +7,4 @@ Author: Daijiang Li
 Maintainer: Daijiang Li <daijianglee@gmail.com>
 Description: To keep all my functions in one place, and to use them more easily.
 License: MIT + file LICENSE
-Depends: ggplot2, plyr, stringr, reshape2
+Depends: ggplot2, plyr, stringr, reshape2, dplyr
