@@ -8,6 +8,7 @@
 #' @author Daijiang Li
 #' @param df data frame of vegtation data. Should have site, quad, sp columns.
 #' @return list. 
+#' @export
 
 # split sites into list, each element is a site by species data frame for one site
 wide_by_site=function(df){ 

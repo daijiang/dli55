@@ -7,6 +7,7 @@
 #' It will call wide_by_site function inside.
 #' @param n number of ramdom sampling from quadrats of 2000s data for each site.
 #' @param q how many quadrats to sample out for 2000s data for all sites.
+#' @export
 
 
 wide_by_site_rarefy=function(df, n=1000, q = 20){ 
