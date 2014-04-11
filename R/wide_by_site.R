@@ -6,8 +6,6 @@
 #' \code{wide_by_site} to change from long table to wide table for each site
 #' 
 #' @author Daijiang Li
-#' @import reshape2 
-#' @import plyr
 #' @param df data frame of vegtation data. Should have site, quad, sp columns.
 #' @return list. 
 
