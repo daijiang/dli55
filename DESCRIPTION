@@ -12,4 +12,6 @@ Depends:
     plyr,
     stringr,
     reshape2,
-    dplyr
+    dplyr,
+    vegan,
+    bipartite

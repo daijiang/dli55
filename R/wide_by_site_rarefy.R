@@ -1,13 +1,15 @@
 # Resample survey data
-#' \code{resample} to resample quadrats from survey data
+#' \code{wide_by_site_rarefy} to resample quadrats from survey data
 #' 
 #' @author Daijiang Li
 #' 
 #' @param df data frame of vegtation data. Should have site, quad, sp columns. 
 #' It will call wide_by_site function inside.
-#' @param n number of ramdom sampling from quadrats of 2000s data for each site.
+#' @param n times of ramdom sampling from quadrats of 2000s data for each site.
 #' @param q how many quadrats to sample out for 2000s data for all sites.
 #' @export
+#' @return a list of lists. A list of sites, each sites then has n ramdon rampled site by sp data frames 
+#' (formed a list for that site).
 
 
 wide_by_site_rarefy=function(df, n=1000, q = 20){ 

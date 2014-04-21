@@ -1,3 +1,4 @@
+export(cscore_site)
 export(multiplot)
 export(wide_by_site)
 export(wide_by_site_rarefy)
