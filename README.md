@@ -8,4 +8,11 @@ To install this package, just run:
     library(devtools)
     install_github("dli55", "daijiang")
     
+## Functions
+
+- multiplot(): put multiple ggplot figures into one page.
+- wide_by_site(): change long table of vegetatino data into wide table for each site (quadrat by site matrix).
+- wide_by_site_rarefy(): simialr as above, but randomly sample q quadrats out of sites' total quadrats n times. Returns a list of lists.
+- cscore_site(): calculate C-score for each site using null models.
+    
 
