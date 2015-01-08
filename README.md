@@ -14,5 +14,5 @@ To install this package, just run:
 - `wide_by_site()`: change long table of vegetatino data into wide table for each site (quadrat by site matrix).
 - `wide_by_site_rarefy()`: simialr as above, but randomly sample q quadrats out of sites' total quadrats n times. Returns a list of lists.
 - `cscore_site()`: calculate C-score for each site using null models.
-    
+- `check_names()`: check plant species names for typos and synonyms.
 
