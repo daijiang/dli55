@@ -13,5 +13,5 @@ Depends:
     stringr,
     reshape2,
     dplyr,
-    vegan,
-    bipartite
+    vegan
+RoxygenNote: 6.0.1
