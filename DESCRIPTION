@@ -7,11 +7,16 @@ Author: Daijiang Li
 Maintainer: Daijiang Li <daijianglee@gmail.com>
 Description: To keep all my functions in one place, and to use them more easily.
 License: MIT + file LICENSE
-Depends:
-    ggplot2,
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.0)
+RoxygenNote: 6.0.1
+LinkingTo: Rcpp, RcppArmadillo
+Imports: Rcpp,
     plyr,
     stringr,
     reshape2,
-    dplyr,
-    vegan
-RoxygenNote: 6.0.1
+    tidyverse,
+    vegan,
+    ape,
+    picante

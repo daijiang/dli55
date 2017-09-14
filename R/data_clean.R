@@ -1,5 +1,14 @@
-# Randomization tests
-#' \code{rand_test} to perform randomization test between two vectors.
+#' @useDynLib dli55
+#' @importFrom Rcpp sourceCpp
+NULL
+
+#' @importFrom ape read.tree write.tree drop.tip compute.brlen vcv.phylo vcv 
+#' @importFrom picante unifrac phylosor prune.sample 
+NULL
+
+#' Randomization tests
+#' 
+#' to perform randomization test between two vectors.
 #' 
 #' @author Daijiang Li
 #' 
@@ -12,7 +21,7 @@ rand_test = function(x, y, n = 1000){
   delta.obs = mean(x, na.rm = T) - mean(y, na.rm = T)
   # cat(delta.obs, "\n")
   pool = c(x, y)
-  delta.null = rdply(.n = n, function(){
+  delta.null = plyr::rdply(.n = n, function(){
     x1.index = sample(length(pool), length(x), replace = F)
     x1 = pool[x1.index]
     y1 = pool[-x1.index]
@@ -81,6 +90,23 @@ rm_sp_noobs = function(df){
   df
 }
 
+# function to remove site that has no observations (site by sp matrix)
+#' \code{rm_site_noobs} remove site that has no obsrevations of any species.
+#' 
+#' @author Daijiang Li
+#' 
+#' @param df a data frame in wide form, i.e. site by species data frame, with site names as row name.
+#' @export
+#' @return  a data frame.
+rm_site_noobs = function(df){
+  if(any(rowSums(df) == 0)){
+    df = df[-which(rowSums(df) == 0),]
+  } else {
+    df = df
+  }
+  df
+}
+
 # logit transformation
 #' \code{logit_tran} to conduct logit-transformation.
 #' 
@@ -108,3 +134,48 @@ simpleCap <- function(x) {
   paste(toupper(substring(s, 1,1)), substring(s, 2),
         sep="", collapse=" ")
 } 
+
+# Check plant species names for typos and synonyms
+#' \code{check_names} to check plant species names in Wisconsin for typos and synonyms using UWSP herbarium as baseline.
+#' 
+#' @author Daijiang Li
+#' 
+#' @param sp.to.check A vector of plant species to check.
+#' @param sp.dataset species names and their synonyms from UWSP herbarium website.
+#' @examples
+#' check_names(sp.to.check = c("Acer rubrum", "Quercus abla"))
+#' @return
+#' \itemize{
+#'   \item sp.origin the original species names.
+#'   \item sp.spell the closest correct species names after check for typos, if any.
+#'   \item sp.final the updated species names after check for synonyms, if any.
+#'   \item spell.correct logical, are the species names spelled correctly?
+#'   \item syc.correct logical, are the species names updated?
+#' }
+#' @export
+check_names <- function(sp.to.check, sp.dataset = sp_syn_uwsp){
+  sp.dataset.list = unique(na.omit(sp.dataset$syn))
+  #most close spelling in the dataset
+  sp.spell.checked = sapply(sp.to.check, function(x){
+    # igonre xxx.spp xxx sp
+    if(any(stringr::str_detect(pattern = ".*sp[0-9]?$|.*spp[0-9]?$|.*sp\\.$", string = x))){
+      x
+    } else{
+      sp.dataset.list[which.min(adist(x, sp.dataset.list))]}
+  })
+  #sp names used as main in webpages of UWSP herbarium
+  sp.syc = sapply(sp.spell.checked, function(x){
+    if(any(stringr::str_detect(pattern = ".*sp[0-9]?$|.*spp[0-9]?$|.*sp\\.$", string = x))){
+      x
+    } else{
+      y = unique(na.omit(sp.dataset$sp[sp.dataset$syn == x]))
+      if(length(y > 1)){
+        y = y[which.min(adist(x, y))]
+      }
+      y}
+  })
+  data.frame(sp.origin = sp.to.check, sp.spell = sp.spell.checked,
+             sp.final = sp.syc, 
+             spell.correct = sp.to.check == sp.spell.checked,
+             syc.correct = sp.spell.checked == sp.syc)
+}

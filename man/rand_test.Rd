@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_clean.R
 \name{rand_test}
 \alias{rand_test}
-\title{\code{rand_test} to perform randomization test between two vectors.}
+\title{Randomization tests}
 \usage{
 rand_test(x, y, n = 1000)
 }
@@ -17,7 +17,7 @@ rand_test(x, y, n = 1000)
 a data frame with mean, rank, p.value, etc.
 }
 \description{
-\code{rand_test} to perform randomization test between two vectors.
+to perform randomization test between two vectors.
 }
 \author{
 Daijiang Li
