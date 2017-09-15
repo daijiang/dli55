@@ -1,0 +1,48 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This package holds functions I wrote or collected that are useful for myself.
+
+## PCD
+
+Adopted from the `picante` R package, wrote by Ives and Helmus 2010.
+
+```{r pcd}
+library(dli55)
+x1.c = pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
+              comm_new = read.csv("data/li_2015_new.csv", row.names = 1, check.names = F),
+                  tree = ape::read.tree("data/phy.tre"), reps = 100)
+x1.r = pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
+                comm_new = read.csv("data/li_2015_new.csv", row.names = 1, check.names = F),
+                tree = ape::read.tree("data/phy.tre"), reps = 100, cpp = F)
+x1.c; x1.r
+
+library(microbenchmark)
+microbenchmark(pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
+                        comm_new = read.csv("data/li_2015_new.csv", row.names = 1, check.names = F),
+                        tree = ape::read.tree("data/phy.tre"), reps = 100, cpp = FALSE),
+               pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
+                        comm_new = read.csv("data/li_2015_new.csv", row.names = 1, check.names = F),
+                        tree = ape::read.tree("data/phy.tre"), reps = 100, cpp = TRUE),
+               times = 60)
+microbenchmark(pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
+                    tree = ape::read.tree("data/phy.tre"), 
+                    nsp_pool = x1.c$nsp_pool, 
+                    PSV_bar = x1.c$psv_bar, 
+                    PSV_pool = x1.c$psv_pool, 
+                    nsr = x1.c$nsr, cpp = F),
+               pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
+                    tree = ape::read.tree("data/phy.tre"), 
+                    nsp_pool = x1.c$nsp_pool, 
+                    PSV_bar = x1.c$psv_bar, 
+                    PSV_pool = x1.c$psv_pool, 
+                    nsr = x1.c$nsr, cpp = T),
+               times = 20)
+```
+
