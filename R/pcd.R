@@ -96,6 +96,8 @@ pcd_pred = function(comm_old, comm_new = NULL, tree, reps = 10^3, cpp = TRUE){
 #' @param PSV_pool PSV of pool, calculated from \code{pcd_pred()}.
 #' @param nsr unique species richness of the pool, calculated from \code{pcd_pred()}.
 #' @param cpp whether to use loops written with c++, default is TRUE
+#' @param unif_dim the number of cells (nrow * ncol) of the comm, 
+#' if it is less than unif_dim, then calculate unifrac and phylosor; these functions are very slow.
 #' @return a list of a variety of pairwise dissimilarities.
 #' @export
 #' @examples
@@ -108,10 +110,10 @@ pcd_pred = function(comm_old, comm_new = NULL, tree, reps = 10^3, cpp = TRUE){
 #'       PSV_bar = x1$psv_bar, 
 #'       PSV_pool = x1$psv_pool, 
 #'       nsr = x1$nsr)
-pcd2 = function(comm, tree, nsp_pool, PSV_bar, PSV_pool, nsr, cpp = TRUE){
+pcd2 = function(comm, tree, nsp_pool, PSV_bar, PSV_pool, nsr, cpp = TRUE, unif_dim = 1000){
   # calculate other common ones
   # rao.output = raoD2(comm, phy = tree)$H # a DISSIMILAR matrix
-  if(ncol(comm) < 500){
+  if(nrow(comm) * ncol(comm) < unif_dim){
     unif = unifrac(comm, tree) # a DISSIMILAR distance matrix
     physor = 1 - phylosor(comm, tree) # a DISSIMILAR distance matrix
   } else {
