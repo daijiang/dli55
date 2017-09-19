@@ -179,3 +179,28 @@ check_names <- function(sp.to.check, sp.dataset = sp_syn_uwsp){
              spell.correct = sp.to.check == sp.spell.checked,
              syc.correct = sp.spell.checked == sp.syc)
 }
+
+#' match taxa names with the Open Tree of Life
+#' 
+#' based on rotl::tnrs_match_names(), which only allow <= 250 species each time. This function will try to do batch match
+#' 
+#' @param taxa a vector of species names to match
+#' @param n_per_req number of species to match per requery, must be <= 250
+#' @return if the length of taxa is smaller than n_per_req, then a data frame will be returned. otherwise, a list
+#' @export
+#' 
+tnrs_match_names_2 = function(taxa, n_per_req = 20, ...){
+  n = length(taxa)
+  stopifnot(n_per_req <= 250)
+  if(n < n_per_req) return(rotl::tnrs_match_names(taxa, ...))
+  x = data.frame(sp = taxa, nitem = c(rep(1:floor(n / n_per_req), each = n_per_req), 
+                                      rep(ceiling(n / n_per_req), 
+                                          n - (n_per_req * floor(n / n_per_req)))),
+                 stringsAsFactors = FALSE)
+  out = vector("list", max(x$nitem))
+  for(i in 1:(max(x$nitem))){
+    cat(i, " of ", max(x$nitem), "\n")
+    out[[i]] = try(rotl::tnrs_match_names(x$sp[x$nitem == i], ...))
+  }
+  out
+}
