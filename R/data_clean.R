@@ -4,6 +4,8 @@ NULL
 
 #' @importFrom ape read.tree write.tree drop.tip compute.brlen vcv.phylo vcv 
 #' @importFrom picante unifrac phylosor prune.sample 
+#' @importFrom graphics hist par rect strwidth text
+#' @importFrom dplyr %>% 
 NULL
 
 #' Randomization tests
@@ -51,7 +53,7 @@ dist_to_df = function(x){
   df$Var1 = as.character(df$Var1)
   df$Var2 = as.character(df$Var2)
   df = as.data.frame(t(combn(colnames(mat), 2))) %>% rename(Var1 = V1, Var2 = V2) %>% 
-    left_join(df, by = c("Var1", "Var2"))
+    dplyr::left_join(df, by = c("Var1", "Var2"))
   names(df) = c("site1", "site2", "distance")
   rownames(df) = 1:nrow(df)
   df

@@ -4,22 +4,18 @@
 \alias{pcd2}
 \title{pairwise site phylogenetic community dissimilarity (PCD) within a community}
 \usage{
-pcd2(comm, tree, nsp_pool, PSV_bar, PSV_pool, nsr, cpp = TRUE)
+pcd2(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000)
 }
 \arguments{
 \item{comm}{site by species data frame or matrix, sites as rows.}
 
 \item{tree}{a phylogeny for species}
 
-\item{nsp_pool}{number of species from the pool, calculated from \code{pcd_pred()}.}
-
-\item{PSV_bar}{expected PSV, calculated from \code{pcd_pred()}.}
-
-\item{PSV_pool}{PSV of pool, calculated from \code{pcd_pred()}.}
-
-\item{nsr}{unique species richness of the pool, calculated from \code{pcd_pred()}.}
+\item{expectation}{nsp_pool, psv_bar, psv_pool, and nsr calculated from \code{pcd_pred()}.}
 
 \item{cpp}{whether to use loops written with c++, default is TRUE}
+
+\item{unif_dim}{the number of cells (nrow * ncol) of the comm, if it is less than unif_dim, then calculate unifrac and phylosor; these functions are very slow.}
 }
 \value{
 a list of a variety of pairwise dissimilarities.
@@ -33,8 +29,5 @@ x1 = pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.n
                  tree = ape::read.tree("data/phy.tre"), reps = 100)
 pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
       tree = ape::read.tree("data/phy.tre"), 
-      nsp_pool = x1$nsp_pool, 
-      PSV_bar = x1$psv_bar, 
-      PSV_pool = x1$psv_pool, 
-      nsr = x1$nsr)
+      expectation = x1)
 }
