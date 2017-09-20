@@ -24,9 +24,9 @@ x1.c; x1.r
     ## 
     ## $psv_bar
     ##         1         6         7         5         2         4         3 
-    ## 0.8122259 0.5436851 0.4795122 0.5791422 0.7079984 0.5898115 0.6668727 
+    ## 0.7656272 0.5062540 0.4515079 0.5928342 0.7105119 0.6037607 0.6264553 
     ##         9 
-    ## 0.4523102 
+    ## 0.4061341 
     ## 
     ## $psv_pool
     ## [1] 0.8414645
@@ -39,9 +39,9 @@ x1.c; x1.r
     ## 
     ## $psv_bar
     ##         1         6         7         5         2         4         3 
-    ## 0.7796509 0.5201671 0.4963931 0.5710461 0.6443410 0.6114685 0.7043220 
+    ## 0.7842456 0.5389647 0.4775832 0.5607200 0.7266255 0.6313489 0.6554613 
     ##         9 
-    ## 0.4066287 
+    ## 0.4063451 
     ## 
     ## $psv_pool
     ## [1] 0.8414645
@@ -57,37 +57,33 @@ microbenchmark(pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 
                pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
                         comm_new = read.csv("data/li_2015_new.csv", row.names = 1, check.names = F),
                         tree = ape::read.tree("data/phy.tre"), reps = 100, cpp = TRUE),
-               times = 60)
+               times = 20)
 ```
 
     ## Unit: milliseconds
     ##                                                                                                                                                                                                                                               expr
     ##  pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1,      check.names = F), comm_new = read.csv("data/li_2015_new.csv",      row.names = 1, check.names = F), tree = ape::read.tree("data/phy.tre"),      reps = 100, cpp = FALSE)
     ##   pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1,      check.names = F), comm_new = read.csv("data/li_2015_new.csv",      row.names = 1, check.names = F), tree = ape::read.tree("data/phy.tre"),      reps = 100, cpp = TRUE)
-    ##        min        lq      mean    median        uq       max neval cld
-    ##  38.330547 39.922463 41.334938 41.088976 42.420504 47.929658    60   b
-    ##   5.508976  5.704419  5.972851  5.815033  6.037773  8.334505    60  a
+    ##        min        lq      mean   median        uq       max neval cld
+    ##  44.583163 48.606821 58.277472 49.85511 70.290546 104.35699    20   b
+    ##   7.182271  7.620585  9.168821  8.90935  9.997768  14.14568    20  a
 
 ``` r
 microbenchmark(pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
                     tree = ape::read.tree("data/phy.tre"), 
-                    nsp_pool = x1.c$nsp_pool, 
-                    PSV_bar = x1.c$psv_bar, 
-                    PSV_pool = x1.c$psv_pool, 
-                    nsr = x1.c$nsr, cpp = F),
+                    expectation = x1.c, cpp = F),
                pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
                     tree = ape::read.tree("data/phy.tre"), 
-                    nsp_pool = x1.c$nsp_pool, 
-                    PSV_bar = x1.c$psv_bar, 
-                    PSV_pool = x1.c$psv_pool, 
-                    nsr = x1.c$nsr, cpp = T),
+                    expectation = x1.c, cpp = T),
                times = 20)
 ```
 
+    ## 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1  2  3  4  5  6  7  8  9  10  11  12  13  14  1  2  3  4  5  6  7  8  9  10  11  12  13  14
+
     ## Unit: milliseconds
-    ##                                                                                                                                                                                                                                      expr
-    ##  pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),      tree = ape::read.tree("data/phy.tre"), nsp_pool = x1.c$nsp_pool,      PSV_bar = x1.c$psv_bar, PSV_pool = x1.c$psv_pool, nsr = x1.c$nsr,      cpp = F)
-    ##  pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),      tree = ape::read.tree("data/phy.tre"), nsp_pool = x1.c$nsp_pool,      PSV_bar = x1.c$psv_bar, PSV_pool = x1.c$psv_pool, nsr = x1.c$nsr,      cpp = T)
+    ##                                                                                                                                                         expr
+    ##  pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),      tree = ape::read.tree("data/phy.tre"), expectation = x1.c,      cpp = F)
+    ##  pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),      tree = ape::read.tree("data/phy.tre"), expectation = x1.c,      cpp = T)
     ##       min       lq     mean   median       uq      max neval cld
-    ##  217.0081 219.3897 233.8237 223.5000 227.9881 414.5605    20   b
-    ##  156.4941 161.4989 168.2967 164.5911 170.1828 236.1666    20  a
+    ##  276.6306 279.6848 291.9925 282.3650 291.1818 387.1725    20   b
+    ##  199.4720 209.0499 232.6000 213.1885 238.1650 332.6463    20  a

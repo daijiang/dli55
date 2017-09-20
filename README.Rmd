@@ -30,19 +30,13 @@ microbenchmark(pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 
                pcd_pred(comm_old = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
                         comm_new = read.csv("data/li_2015_new.csv", row.names = 1, check.names = F),
                         tree = ape::read.tree("data/phy.tre"), reps = 100, cpp = TRUE),
-               times = 60)
+               times = 20)
 microbenchmark(pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
                     tree = ape::read.tree("data/phy.tre"), 
-                    nsp_pool = x1.c$nsp_pool, 
-                    PSV_bar = x1.c$psv_bar, 
-                    PSV_pool = x1.c$psv_pool, 
-                    nsr = x1.c$nsr, cpp = F),
+                    expectation = x1.c, cpp = F),
                pcd2(comm = read.csv("data/li_2015_old.csv", row.names = 1, check.names = F),
                     tree = ape::read.tree("data/phy.tre"), 
-                    nsp_pool = x1.c$nsp_pool, 
-                    PSV_bar = x1.c$psv_bar, 
-                    PSV_pool = x1.c$psv_pool, 
-                    nsr = x1.c$nsr, cpp = T),
+                    expectation = x1.c, cpp = T),
                times = 20)
 ```
 
