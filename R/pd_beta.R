@@ -113,7 +113,7 @@ pcd2 = function(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000){
   SCii = expectation$psv_pool
   
   if(nrow(comm) * ncol(comm) < unif_dim){
-    unif = picante::unifrac(comm, tree) # a DISSIMILAR distance matrix
+    unif = unifrac2(comm, tree) # a DISSIMILAR distance matrix
     physor = 1 - picante::phylosor(comm, tree) # a DISSIMILAR distance matrix
   } else {
     unif = physor = NA
@@ -247,4 +247,76 @@ pcd2 = function(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000){
   #   dist_to_df(x)
   # }) %>% rename(id = .id)
   output
+}
+
+#' unifrac
+#' 
+#' calculate unifrac of pairwise site. This is based on picante::unifrac, but with phylocomr::ph_pd to calculate pd, which can improve speed dramatically.
+#' 
+#' @param comm a site by sp data frame, row names are site names
+#' @param tree a phylogeny with "phylo" class
+#' @param comm_long a long format of comm, can be missing
+#' @return a site by site distance object
+#' @export
+#' 
+unifrac2 <- function (comm, tree, comm_long) {
+  if (is.null(tree$edge.length)) {
+    stop("Tree has no branch lengths, cannot compute UniFrac")
+  }
+  
+  if (!is.rooted(tree)) {
+    stop("Rooted phylogeny required for UniFrac calculation")
+  }
+  
+  class(tree) = "phylo"
+  
+  if(missing(comm_long)){
+    comm_long = tibble::rownames_to_column(as.data.frame(comm), "site") %>% tidyr::gather("sp", "freq", -site) %>% 
+      filter(freq > 0) %>% arrange(site, sp) %>% select(site, freq, sp)
+  }
+  
+  comm <- as.matrix(comm)
+  s <- nrow(comm)
+  phylodist <- matrix(NA, s, s)
+  rownames(phylodist) <- rownames(comm)
+  colnames(phylodist) <- rownames(comm)
+  
+  comm_comb<-matrix(NA,s*(s-1)/2,ncol(comm))
+  colnames(comm_comb)<-colnames(comm)
+  
+  i<-1
+  for (l in 1:(s - 1)){
+    for (k in (l + 1):s){
+      comm_comb[i,]<-comm[l, ] + comm[k, ]
+      i<-i+1
+    }
+  }
+  
+  pdcomm = try(phylocomr::ph_pd(sample = comm_long, phylo = tree) %>% 
+                 rename(PD = pd, site = sample))
+  if("try-error" %in% class(pdcomm)){
+    cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+    pdcomm = picante::pd(comm, tree, include.root = TRUE) 
+    pdcomm_comb <- picante::pd(comm_comb, tree)
+  } else {
+    comm_comb_long = tibble::rownames_to_column(as.data.frame(comm_comb), "site") %>% 
+      tidyr::gather("sp", "freq", -site) %>% 
+      filter(freq > 0) %>% arrange(site, sp) %>% select(site, freq, sp)
+    pdcomm_comb = try(phylocomr::ph_pd(sample = comm_comb_long, phylo = tree) %>% 
+                        rename(PD = pd, site = sample) %>% arrange(site))
+  }
+  pdcomm = data_frame(site = row.names(comm)) %>% left_join(pdcomm, by = "site") # make sure the same order
+  
+  i<-1
+  for (l in 1:(s - 1)) {
+    pdl <- pdcomm[l,"PD"]
+    for (k in (l + 1):s) {
+      pdk <- pdcomm[k,"PD"]
+      pdcomb <- pdcomm_comb[i,"PD"]
+      pdsharedlk <- pdl + pdk - pdcomb
+      phylodist[k, l] =  as_vector((pdcomb - pdsharedlk) / pdcomb)
+      i<-i+1
+    }
+  }
+  return(as.dist(phylodist))
 }
