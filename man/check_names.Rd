@@ -24,7 +24,7 @@ check_names(sp.to.check, sp.dataset = sp_syn_uwsp)
 \code{check_names} to check plant species names in Wisconsin for typos and synonyms using UWSP herbarium as baseline.
 }
 \examples{
-check_names(sp.to.check = c("Acer rubrum", "Quercus abla"))
+check_names(sp.to.check = c('Acer rubrum', 'Quercus abla'))
 }
 \author{
 Daijiang Li

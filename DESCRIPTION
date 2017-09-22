@@ -11,6 +11,7 @@ Encoding: UTF-8
 Depends: R (>= 3.0), stats, utils, methods
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp, RcppArmadillo
+Remotes: ropensci/phylocomr
 Imports: Rcpp,
     plyr,
     stringr,
@@ -18,5 +19,6 @@ Imports: Rcpp,
     tidyverse,
     vegan,
     ape,
-    picante
+    picante,
+    phylocomr
 Suggests: testthat

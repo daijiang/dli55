@@ -7,7 +7,7 @@
 dist_to_df(x)
 }
 \arguments{
-\item{x}{a object of class "dist" or a matrix.}
+\item{x}{a object of class 'dist' or a matrix.}
 }
 \value{
 a data frame with three columns: site1, site2, distance.

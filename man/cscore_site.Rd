@@ -11,9 +11,9 @@ cscore_site(df, method = "c0", nsimul = 1000, rarefy = FALSE, n = 1000,
 \item{df}{data frame of vegtation data. Should have site, quad, sp columns. 
 This function will call wide_by_site function inside.}
 
-\item{method}{methods for building null models. Check oecosium from vegan package for more options. "c0"
-for fixed species incidence and equalprobalility for site (site species richness can vary); "quasiswap"
-for fixed sp - fixed site,  suppose to be faster; "tswap" also for fixed-fixed but slower. Default is "c0".}
+\item{method}{methods for building null models. Check oecosium from vegan package for more options. 'c0'
+for fixed species incidence and equalprobalility for site (site species richness can vary); 'quasiswap'
+for fixed sp - fixed site,  suppose to be faster; 'tswap' also for fixed-fixed but slower. Default is 'c0'.}
 
 \item{nsimul}{how many null communities to use for simulation? Default is 1000.}
 
@@ -24,7 +24,7 @@ for fixed sp - fixed site,  suppose to be faster; "tswap" also for fixed-fixed b
 \item{q}{used only if rarefy=TRUE. How many quadrats to sample out for 2000s data for all sites.}
 }
 \value{
-If no rarefy, it returns a dataframe. It has "z", "means_sim", "pval", "cs_obs", "site" columns.
+If no rarefy, it returns a dataframe. It has 'z', 'means_sim', 'pval', 'cs_obs', 'site' columns.
 If rarefy=TRUE, it returns a list: detail and summary for all sites.
 }
 \description{
