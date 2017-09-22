@@ -108,7 +108,7 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     faith_pd = picante::pd(samp_wide, tree, include.root = TRUE) %>% select(-SR) %>% 
       tibble::rownames_to_column("site") %>% rename(pd = PD) %>% 
       mutate(pd.prop = round(pd / sum(tree$edge.length), 3))
-    mntd_s = picante::mntd(samp, dist, abundance.weighted = abund.weight)
+    mntd_s = picante::mntd(samp_wide, dist, abundance.weighted = abund.weight)
   } else{
     # MPD and MNTD
     cat("Phylocom has no trouble with this phylogeny ", "\n")
@@ -129,11 +129,11 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
   
   
   # variance of pairwise distance
-  mvpd_s   = mvpd(samp, dist, abundance.weighted = abund.weight)
+  mvpd_s   = mvpd(samp_wide, dist, abundance.weighted = abund.weight)
   # PSV
   # psr_s    = psr(samp, tree, compute.var = FALSE) %>% mutate(site = row.names(samp)) %>% select(-SR)
-  psv_s    = picante::psv(samp, tree, compute.var = FALSE) %>% mutate(site = row.names(samp)) %>% select(-SR)
-  pse_s    = picante::pse(samp, tree) %>% mutate(site = row.names(samp)) %>% select(-SR)
+  psv_s    = picante::psv(samp_wide, tree, compute.var = FALSE) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
+  pse_s    = picante::pse(samp_wide, tree) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
   # more?
   if("try-error" %in% class(faith_pd_c)){
     # cat("Return results based on R /n")
