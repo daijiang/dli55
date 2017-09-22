@@ -5,7 +5,8 @@
 \title{calculate pairwise beta phylogenetic diversity}
 \usage{
 get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
-  n.item = 999, abund.weight = TRUE, get.pcd = TRUE, ...)
+  n.item = 999, abund.weight = TRUE, get.pcd = TRUE, verbose = TRUE,
+  ...)
 }
 \arguments{
 \item{samp_wide}{wide version of samp_long, row.names are sites, colnames are species}
@@ -23,6 +24,8 @@ get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
 \item{abund.weight}{should abundance information used when calculating pd?}
 
 \item{get.pcd}{calculate PCD or not? Can be time consuming.}
+
+\item{verbose}{do you want to see relevant information?}
 }
 \value{
 a data frame

@@ -4,7 +4,8 @@
 \alias{pcd2}
 \title{pairwise site phylogenetic community dissimilarity (PCD) within a community}
 \usage{
-pcd2(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000)
+pcd2(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000,
+  verbose = TRUE)
 }
 \arguments{
 \item{comm}{site by species data frame or matrix, sites as rows.}
@@ -16,6 +17,8 @@ pcd2(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000)
 \item{cpp}{whether to use loops written with c++, default is TRUE}
 
 \item{unif_dim}{the number of cells (nrow * ncol) of the comm, if it is less than unif_dim, then calculate unifrac and phylosor; these functions are very slow.}
+
+\item{verbose}{do you want to see the progress?}
 }
 \value{
 a list of a variety of pairwise dissimilarities.

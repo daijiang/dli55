@@ -64,7 +64,7 @@ NumericVector predict_cpp(int n, const arma::vec& nsr, int reps, const arma::mat
 
 // [[Rcpp::export]]
 List pcd2_loop(arma::vec SSii, arma::vec nsr, double SCii, const arma::mat& comm, 
-               const arma::mat& V, int nsp_pool){
+               const arma::mat& V, int nsp_pool, bool verbose){
   int m = comm.n_rows;
   int n = comm.n_cols;
   NumericMatrix PCD(m, m);
@@ -76,7 +76,7 @@ List pcd2_loop(arma::vec SSii, arma::vec nsr, double SCii, const arma::mat& comm
   vec nna = as<vec>(nn);
   
   for(int i = 0; i < (m - 1); i++){
-    Rcout << i + 1 << " " ;
+    if (verbose) {Rcout << i + 1 << " " ;}
     for(int j = i + 1; j < m; j++){
       // Rcout << "Rows: " << j + 1 << std::endl ;
       uvec c_i = find(comm.row(i) == 1);

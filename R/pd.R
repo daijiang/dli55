@@ -84,12 +84,13 @@ mvpd <- function(samp, dis, abundance.weighted=FALSE){
 #' @param null.type if null.model is TRUE, which null model to use?See ?phylocomr::ph_comstruct for details
 #' @param n.item the number of randomization
 #' @param abund.weight should abundance information used when calculating pd?
+#' @param verbose do you want to see relevant information?
 #' @return a data frame
 #' @export
 #' 
 get_pd_alpha = function(samp_wide, tree, samp_long, 
                         null.model = TRUE, null.type = 0, n.item = 999,
-                        abund.weight = TRUE, ...){
+                        abund.weight = TRUE, verbose = TRUE, ...){
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
   
@@ -104,14 +105,14 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
                      select(sample, pd, proptreebl) %>% 
                      rename(site = sample, pd.prop = proptreebl))
   if("try-error" %in% class(faith_pd_c)){
-    cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+    if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
     faith_pd = picante::pd(samp_wide, tree, include.root = TRUE) %>% select(-SR) %>% 
       tibble::rownames_to_column("site") %>% rename(pd = PD) %>% 
       mutate(pd.prop = round(pd / sum(tree$edge.length), 3))
     mntd_s = picante::mntd(samp_wide, dist, abundance.weighted = abund.weight)
   } else{
     # MPD and MNTD
-    cat("Phylocom has no trouble with this phylogeny ", "\n")
+    if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
     if(null.model){
       mpd_mntd = phylocomr::ph_comstruct(sample = samp_long, phylo = tree, 
                                          null_model = null.type, 
@@ -250,6 +251,7 @@ pcd_pred = function(comm_old, comm_new = NULL, tree, reps = 10^3, cpp = TRUE) {
 #' @param expectation nsp_pool, psv_bar, psv_pool, and nsr calculated from \code{pcd_pred()}.
 #' @param cpp whether to use loops written with c++, default is TRUE
 #' @param unif_dim the number of cells (nrow * ncol) of the comm, if it is less than unif_dim, then calculate unifrac and phylosor; these functions are very slow.
+#' @param verbose do you want to see the progress?
 #' @return a list of a variety of pairwise dissimilarities.
 #' @export
 #' @examples
@@ -259,7 +261,7 @@ pcd_pred = function(comm_old, comm_new = NULL, tree, reps = 10^3, cpp = TRUE) {
 #' pcd2(comm = read.csv('data/li_2015_old.csv', row.names = 1, check.names = F),
 #'       tree = ape::read.tree('data/phy.tre'), 
 #'       expectation = x1)
-pcd2 = function(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000) {
+pcd2 = function(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000, verbose = TRUE) {
     if (is.null(expectation)) {
         expectation = pcd_pred(comm_old = comm, tree = tree)
     }
@@ -301,7 +303,7 @@ pcd2 = function(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000) {
     }
     
     if (cpp) {
-        xxx = pcd2_loop(SSii, nsr, SCii, as.matrix(comm), V, nsp_pool)
+        xxx = pcd2_loop(SSii, nsr, SCii, as.matrix(comm), V, nsp_pool, verbose)
         PCD = xxx$PCD
         PCDc = xxx$PCDc
         PCDp = xxx$PCDp
@@ -319,7 +321,7 @@ pcd2 = function(comm, tree, expectation = NULL, cpp = TRUE, unif_dim = 1000) {
         D_pairwise = array(NA, c(m, m))
         dsor_pairwise = array(NA, c(m, m))
         for (i in 1:(m - 1)) {
-            cat(i, " ")
+            if(verbose) cat(i, " ")
             for (j in (i + 1):m) {
                 # cat('i = ', i, ', j = ', j, '\n')
                 pick1 = (1:n)[comm[i, ] == 1]
@@ -486,12 +488,13 @@ unifrac2 <- function(comm, tree, comm_long) {
 #' @param n.item the number of randomization
 #' @param abund.weight should abundance information used when calculating pd?
 #' @param get.pcd calculate PCD or not? Can be time consuming.
+#' @param verbose do you want to see relevant information?
 #' @return a data frame
 #' @export
 #' 
 get_pd_beta = function(samp_wide, tree, samp_long,
                        null.model = TRUE, null.type = 0, n.item = 999,
-                       abund.weight = TRUE, get.pcd = TRUE, ...){
+                       abund.weight = TRUE, get.pcd = TRUE, verbose = TRUE, ...){
   
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
@@ -519,13 +522,13 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   }
   
   if("try-error" %in% class(mpd_beta_c)){
-    cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+    if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
     mpd_beta = picante::comdist(samp_wide, dist, abundance.weighted = abund.weight)
     mpd_beta = as.matrix(mpd_beta)
     mntd_beta = picante::comdistnt(samp_wide, dist, abundance.weighted = abund.weight)
     mntd_beta = as.matrix(mntd_beta)
   } else {# good with phylocomr
-    cat("Phylocom has no trouble with this phylogeny ", "\n")
+    if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
     mntd_beta_c = phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model, 
                                           null_model = null.type, randomizations = n.item, 
                                           abundance = abund.weight)
@@ -542,7 +545,7 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   
   # pcd
   if(get.pcd){
-    pcd_beta = pcd2(comm = samp_wide, tree, unif_dim = 0)
+    pcd_beta = pcd2(comm = samp_wide, tree, unif_dim = 0, verbose = verbose)
     PCD = as.matrix(pcd_beta$PCD)
     PCDc = as.matrix(pcd_beta$PCDc)
     PCDp = as.matrix(pcd_beta$PCDp)

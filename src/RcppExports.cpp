@@ -31,8 +31,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // pcd2_loop
-List pcd2_loop(arma::vec SSii, arma::vec nsr, double SCii, const arma::mat& comm, const arma::mat& V, int nsp_pool);
-RcppExport SEXP _dli55_pcd2_loop(SEXP SSiiSEXP, SEXP nsrSEXP, SEXP SCiiSEXP, SEXP commSEXP, SEXP VSEXP, SEXP nsp_poolSEXP) {
+List pcd2_loop(arma::vec SSii, arma::vec nsr, double SCii, const arma::mat& comm, const arma::mat& V, int nsp_pool, bool verbose);
+RcppExport SEXP _dli55_pcd2_loop(SEXP SSiiSEXP, SEXP nsrSEXP, SEXP SCiiSEXP, SEXP commSEXP, SEXP VSEXP, SEXP nsp_poolSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -42,7 +42,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type comm(commSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type V(VSEXP);
     Rcpp::traits::input_parameter< int >::type nsp_pool(nsp_poolSEXP);
-    rcpp_result_gen = Rcpp::wrap(pcd2_loop(SSii, nsr, SCii, comm, V, nsp_pool));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(pcd2_loop(SSii, nsr, SCii, comm, V, nsp_pool, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -50,7 +51,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_dli55_set_seed", (DL_FUNC) &_dli55_set_seed, 1},
     {"_dli55_predict_cpp", (DL_FUNC) &_dli55_predict_cpp, 4},
-    {"_dli55_pcd2_loop", (DL_FUNC) &_dli55_pcd2_loop, 6},
+    {"_dli55_pcd2_loop", (DL_FUNC) &_dli55_pcd2_loop, 7},
     {NULL, NULL, 0}
 };
 

@@ -5,7 +5,7 @@
 \title{calculate alpha phylogenetic diversity}
 \usage{
 get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
-  n.item = 999, abund.weight = TRUE, ...)
+  n.item = 999, abund.weight = TRUE, verbose = TRUE, ...)
 }
 \arguments{
 \item{samp_wide}{wide version of samp_long, row.names are sites, colnames are species}
@@ -21,6 +21,8 @@ get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
 \item{n.item}{the number of randomization}
 
 \item{abund.weight}{should abundance information used when calculating pd?}
+
+\item{verbose}{do you want to see relevant information?}
 }
 \value{
 a data frame

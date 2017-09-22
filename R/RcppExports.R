@@ -9,7 +9,7 @@ predict_cpp <- function(n, nsr, reps, V) {
     .Call('_dli55_predict_cpp', PACKAGE = 'dli55', n, nsr, reps, V)
 }
 
-pcd2_loop <- function(SSii, nsr, SCii, comm, V, nsp_pool) {
-    .Call('_dli55_pcd2_loop', PACKAGE = 'dli55', SSii, nsr, SCii, comm, V, nsp_pool)
+pcd2_loop <- function(SSii, nsr, SCii, comm, V, nsp_pool, verbose) {
+    .Call('_dli55_pcd2_loop', PACKAGE = 'dli55', SSii, nsr, SCii, comm, V, nsp_pool, verbose)
 }
 
