@@ -94,6 +94,10 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
   
+  row.names(samp_wide) = stringr::str_trim(row.names(samp_wide)) %>% 
+    tolower() %>% 
+    stringr::str_replace_all(" ", "_") # phylocom will have trouble with space in site names
+  
   if(missing(samp_long)){
     samp_long = tibble::rownames_to_column(as.data.frame(samp_wide), "site") %>% 
       tidyr::gather("sp", "freq", -site) %>% filter(freq > 0) %>% 
@@ -128,13 +132,12 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     }
   }
   
-  
   # variance of pairwise distance
-  mvpd_s   = mvpd(samp_wide, dist, abundance.weighted = abund.weight)
+  mvpd_s = mvpd(samp_wide, dist, abundance.weighted = abund.weight)
   # PSV
-  # psr_s    = psr(samp, tree, compute.var = FALSE) %>% mutate(site = row.names(samp)) %>% select(-SR)
-  psv_s    = picante::psv(samp_wide, tree, compute.var = FALSE) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
-  pse_s    = picante::pse(samp_wide, tree) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
+  # psr_s = psr(samp, tree, compute.var = FALSE) %>% mutate(site = row.names(samp)) %>% select(-SR)
+  psv_s = picante::psv(samp_wide, tree, compute.var = FALSE) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
+  pse_s = picante::pse(samp_wide, tree) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
   # more?
   if("try-error" %in% class(faith_pd_c)){
     # cat("Return results based on R /n")
@@ -422,6 +425,10 @@ unifrac2 <- function(comm, tree, comm_long) {
     
     class(tree) = "phylo"
     
+    row.names(comm) = stringr::str_trim(row.names(comm)) %>% 
+      tolower() %>% 
+      stringr::str_replace_all(" ", "_") # phylocom will have trouble with space in site names
+    
     if (missing(comm_long)) {
         comm_long = tibble::rownames_to_column(as.data.frame(comm), "site") %>% 
           tidyr::gather("sp", "freq", -site) %>% filter(freq > 0) %>% 
@@ -498,6 +505,10 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
+  
+  row.names(samp_wide) = stringr::str_trim(row.names(samp_wide)) %>% 
+    tolower() %>% 
+    stringr::str_replace_all(" ", "_") # phylocom will have trouble with space in site names
   
   if(missing(samp_long)){
     samp_long = tibble::rownames_to_column(as.data.frame(samp_wide), "site") %>% 
