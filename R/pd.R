@@ -114,6 +114,7 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
       tibble::rownames_to_column("site") %>% rename(pd = PD) %>% 
       mutate(pd.prop = round(pd / sum(tree$edge.length), 3))
     mntd_s = picante::mntd(samp_wide, dist, abundance.weighted = abund.weight)
+    if(null.model) warning("No null model enabled for picante at this moment")
   } else{
     # MPD and MNTD
     if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
@@ -122,6 +123,8 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
                                          null_model = null.type, 
                                          randomizations = n.item, 
                                          abundance = abund.weight)
+      mpd_mntd = select(mpd_mntd, plot, mpd, mntd, nri, nti) %>% 
+        rename(site = plot, mpd_c = mpd, mpd.z = nri, mntd.z = nti)
     } else {
       n.item = 0 # phylocom has no turn off of null model
       mpd_mntd = phylocomr::ph_comstruct(sample = samp_long, phylo = tree, 
@@ -151,7 +154,7 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
                  left_join, by = "site") %>% select(-mpd_c) %>% 
       rename(psv = PSVs, pse = PSEs) %>% tibble::rowid_to_column()
   }
-  select(out, site, rowid, pd, pd.prop, mpd, vpd, mntd, psv, pse) %>% dplyr::tbl_df()
+  select(out, site, rowid, pd, pd.prop, mpd, vpd, mntd, psv, pse, everything()) %>% dplyr::tbl_df()
 }
 
 # beta phylo diversity ----
