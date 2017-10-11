@@ -3,6 +3,8 @@ Untitled
 
 This package holds functions I wrote or collected that are useful for myself.
 
+You can install it with `devtools::install_github("daijiang/dli55")`, but you will likely get compile errors. I have also iploaded a binary version, which you can install with `install.packages("https://raw.githubusercontent.com/daijiang/dli55/master/dli55_1.0.1.tgz", repos = NULL)`.
+
 PCD
 ---
 
