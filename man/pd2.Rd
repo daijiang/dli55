@@ -4,14 +4,14 @@
 \alias{pd2}
 \title{Faith's PD}
 \usage{
-pd2(comm, tree, incld.root = TRUE, comm_long)
+pd2(comm, tree, include.root = TRUE, comm_long)
 }
 \arguments{
 \item{comm}{a site by species data frame, site names as row names}
 
 \item{tree}{a phylogeny of class "phylo"}
 
-\item{incld.root}{whether include root in picante::pd; phylocomr::ph_pd always include root}
+\item{include.root}{whether include root in picante::pd; phylocomr::ph_pd always include root}
 
 \item{comm_long}{long format of comm, 3-columns: site, freq, sp; optional.}
 }

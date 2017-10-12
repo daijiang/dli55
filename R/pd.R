@@ -4,12 +4,12 @@
 #' 
 #' @param comm a site by species data frame, site names as row names
 #' @param tree a phylogeny of class "phylo"
-#' @param incld.root whether include root in picante::pd; phylocomr::ph_pd always include root
+#' @param include.root whether include root in picante::pd; phylocomr::ph_pd always include root
 #' @param comm_long long format of comm, 3-columns: site, freq, sp; optional.
 #' @return a data frame of PD for each site
 #' @export
 #'
-pd2 = function(comm, tree, incld.root = TRUE, comm_long){
+pd2 = function(comm, tree, include.root = TRUE, comm_long){
   if (is.null(tree$edge.length)) {
     stop("Tree has no branch lengths, cannot compute pd")
   }
@@ -19,7 +19,7 @@ pd2 = function(comm, tree, incld.root = TRUE, comm_long){
     if (!is.rooted(tree)) {
       stop("Rooted tree required to calculate PD with include.root=TRUE argument")
     }
-    tree <- ape::node.age(tree)
+    tree <- picante::node.age(tree)
   }
   
   class(tree) = "phylo"
@@ -484,6 +484,123 @@ unifrac2 <- function(comm, tree, comm_long) {
     return(as.dist(phylodist))
 }
 
+#' Phylogenetic beta diversity partition
+#' 
+#' Calculate Phylogenetic beta diversity and its partition, adapted from betapart::phylo.belt.xx()
+#' 
+#' @param comm a site by species data frame, site names as row names
+#' @param tree a phylogeny of class "phylo"
+#' @param index.family "jaccard" or "sorensen"
+#' @param pairwise calculate pairwise beta diversity or multisite beta diversity
+#' @return a list of three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
+#' For sorensen, phylo.beta.sim is the turnover part measured as Simpson derived pairwise dissimilarity, phylo.beta.sne is the nestedness-fraction.
+#' @export
+#'
+phylo_betapart = function(comm, tree, index.family = "jaccard", pairwise = TRUE){
+  # adapted from betaprt::phylo.beta
+  index.family <- match.arg(index.family, c("jaccard", "sorensen"))
+  
+  if (!is.matrix(comm)) {
+    comm <- as.matrix(comm)
+  }
+  
+  if(nrow(comm)<2) stop("Computing dissimilairty requires at least 2 communities", call. = TRUE)
+  if (!is.numeric(comm)) stop("The data in 'comm' is not numeric.", call. = TRUE)
+  xvals <- unique(as.vector(comm))
+  if (any(!is.element(xvals, c(0, 1)))){
+    warning("The community matrix contains values other than 0 and 1: trying to convert data to presence/absence.", call. = TRUE)
+    comm[comm > 1] = 1
+  }
+    
+  if (class(tree)!="phylo")
+    stop("### invalid tree's format: \"phylo\" format required ###\n\n", call. = TRUE)
+  if(any(!(colnames(comm)%in%tree$tip)))
+    warning("At least one species in community matrix is not included in the tree" , call. = TRUE)
+  
+  ############ Paired matrix to distance matrix conversion (utility function) #######################
+  
+  dist.mat <- function(com, pair) {
+    ncom <- nrow(com)
+    distmat <- matrix(nrow=ncom, ncol=ncom, 0, dimnames = list(rownames(com), rownames(com)))
+    for (i in 1:(ncom-1)){
+      for(j in (i+1):ncom){
+        distmat[i, j] = pair[paste(c(rownames(distmat)[i], colnames(distmat)[j]), collapse = "__")]
+      }
+    }
+    # st <- c(0, cumsum(seq(ncom-1, 2))) + 1
+    # end <- cumsum(seq(ncom-1, 1))
+    # for (i in 1:(ncom-1)) distmat[i, (ncom:(seq(1, ncom)[i]))] = c(pair[end[i]:st[i]],0)
+    distmat <- as.dist(t(distmat))
+    return(distmat)
+    
+  } # end of function dist.mat
+  
+  # pariwise comparisons
+  combin  <-  combn(nrow(comm), 2) # table with all pairs
+  labcomb <-  apply(combin, 2, function(x) paste(rownames(comm)[x], collapse = "__"))
+  colnames(combin) = labcomb
+  
+  pds <-  pd2(comm, tree) # PD for each community of the community matrix
+  pd_sites = pds$PD; names(pd_sites) = pds$site
+  com.tot.pair <- 1 * t(apply(combin, 2, function(x) (colSums(comm[x,]) > 0))) # which species in these pairs of comm
+  pd.tot.pair0 <- pd2(com.tot.pair, tree)  # PD of the two communities combined
+  pd.tot.pair = pd.tot.pair0$PD; names(pd.tot.pair) = pd.tot.pair0$site
+  sum.pd.pair <- apply(combin, 2, function(x) sum(pd_sites[x])) # Sum of PD for each community, separetely
+  
+  min.not.shared <- apply(pd.tot.pair - t(combn(pd_sites, 2)), 1, min) # minimun (b,c)
+  names(min.not.shared) = names(pd.tot.pair)
+  max.not.shared <- apply(pd.tot.pair - t(combn(pd_sites, 2)), 1, max) # maximum (b,c)
+  names(max.not.shared) = names(pd.tot.pair)
+  sum.not.shared <- 2*pd.tot.pair - sum.pd.pair  # b+c
+  shared <- pd.tot.pair - sum.not.shared    # a
+  
+  sumSi=sum(pd_sites)
+  shared = dist.mat(comm, shared)
+  sum.not.shared = dist.mat(comm, sum.not.shared)
+  max.not.shared = dist.mat(comm, max.not.shared)
+  min.not.shared = dist.mat(comm, min.not.shared)
+  
+  if(pairwise == FALSE){
+    com.tot.multi <- 1 * t(as.matrix(colSums(comm)>0))
+    rownames(com.tot.multi) = "all"
+    pd.tot.multi <- as.numeric(pd2(com.tot.multi,tree)[,"PD"])  # PD of all communities combined
+    St = pd.tot.multi
+  }
+  
+  
+  if(pairwise){
+    switch(index.family, 
+           sorensen = {
+             phylo.beta.sim <- min.not.shared/(min.not.shared + shared)
+             phylo.beta.sne <- ((max.not.shared - min.not.shared)/((2 * shared) + sum.not.shared)) * (shared/(min.not.shared + shared))
+             phylo.beta.sor <- sum.not.shared/(2 * shared + sum.not.shared)
+             out <- list(phylo.beta.sim = phylo.beta.sim, phylo.beta.sne = phylo.beta.sne, phylo.beta.sor = phylo.beta.sor)
+           },
+           jaccard = {
+             phylo.beta.jtu <- (2 * min.not.shared)/((2 * min.not.shared) + shared)
+             phylo.beta.jne <- ((max.not.shared - min.not.shared)/(shared + sum.not.shared)) * (shared/((2 * min.not.shared) + shared))
+             phylo.beta.jac <- sum.not.shared/(shared + sum.not.shared)
+             out <- list(phylo.beta.jtu = phylo.beta.jtu, phylo.beta.jne = phylo.beta.jne, phylo.beta.jac = phylo.beta.jac)
+           }
+    ) # end of switch
+  } else { # multi sites
+    switch(index.family, 
+           sorensen = {
+             phylo.beta.SIM <- sum(min.not.shared)/(sumSi - St + sum(min.not.shared))
+             phylo.beta.SNE <- ((sum(max.not.shared) - sum(min.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))) * ((sumSi - St)/(sumSi - St + sum(min.not.shared)))
+             phylo.beta.SOR <- (sum(min.not.shared) + sum(max.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))
+             out <- list(phylo.beta.SIM = phylo.beta.SIM, phylo.beta.SNE = phylo.beta.SNE, phylo.beta.SOR = phylo.beta.SOR)
+           },
+           jaccard = {
+             phylo.beta.JTU <- (2 * sum(min.not.shared))/((2 * sum(min.not.shared)) + sumSi - St)
+             phylo.beta.JNE <- ((sum(max.not.shared) - sum(min.not.shared))/(sumSi - St + sum(max.not.shared) + sum(min.not.shared))) * ((sumSi - St)/(2 * sum(min.not.shared) + sumSi - St))
+             phylo.beta.JAC <- (sum(min.not.shared) + sum(max.not.shared))/(sumSi - St + sum(min.not.shared) + sum(max.not.shared))
+             out <- list(phylo.beta.JTU = phylo.beta.JTU, phylo.beta.JNE = phylo.beta.JNE, phylo.beta.JAC = phylo.beta.JAC)
+           }
+    )
+  }
+  return(out)
+} 
 
 #' calculate pairwise beta phylogenetic diversity
 #' 
@@ -519,10 +636,13 @@ get_pd_beta = function(samp_wide, tree, samp_long,
       arrange(site, sp) %>% select(site, freq, sp)
   }
   
-  # unifrac
-  unif = unifrac2(samp_wide, tree, samp_long)
-  unif = as.matrix(unif)
-  
+  # unifrac: jaccard phylo dissimilarity
+  # unif = unifrac2(samp_wide, tree, samp_long)
+  # unif = as.matrix(unif)
+  phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard", pairwise = TRUE) # false won't work here
+  unif = as.matrix(phy_beta$phylo.beta.jac)
+  unif_turnover = as.matrix(phy_beta$phylo.beta.jtu)
+  unif_nested = as.matrix(phy_beta$phylo.beta.jne)
   # comdist: mpd and mntd
   mpd_beta_c = try(phylocomr::ph_comdist(samp_long, tree, rand_test = null.model, 
                                          null_model = null.type, randomizations = n.item, 
@@ -549,8 +669,8 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     if(null.model){
       mpd_beta = to_m(mpd_beta_c$obs)
       mntd_beta = to_m(mntd_beta_c$obs)
-      mpd_beta_z = to_m(mpd_beta_c$NRI_or_NTI) * -1
-      mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * -1
+      mpd_beta_z = to_m(mpd_beta_c$NRI_or_NTI) * (-1)
+      mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * (-1)
     } else {
       mpd_beta = to_m(mpd_beta_c)
       mntd_beta = to_m(mntd_beta_c) 
@@ -570,6 +690,8 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     rename(site1 = V1, site2 = V2)
   if(get.pcd){
     out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
+                 unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
+                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y]),
                  mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]),
                  mntd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta[.x, .y]),
                  pcd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCD[.x, .y]),
@@ -578,7 +700,9 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   } else {
     out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
                  mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]),
-                 mntd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta[.x, .y]))
+                 mntd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta[.x, .y]),
+                 unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
+                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y]))
   }
   
   if(null.model){
