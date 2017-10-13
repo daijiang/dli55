@@ -640,6 +640,7 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   # unif = unifrac2(samp_wide, tree, samp_long)
   # unif = as.matrix(unif)
   phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard", pairwise = TRUE) # false won't work here
+  if(verbose) cat("Done with phylo_betapart, Unifrac", "\n")
   unif = as.matrix(phy_beta$phylo.beta.jac)
   unif_turnover = as.matrix(phy_beta$phylo.beta.jtu)
   unif_nested = as.matrix(phy_beta$phylo.beta.jne)
