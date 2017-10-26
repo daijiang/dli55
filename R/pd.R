@@ -31,15 +31,16 @@ pd2 = function(comm, tree, include.root = TRUE, comm_long){
   }
   
   pdcomm = try(phylocomr::ph_pd(sample = comm_long, phylo = tree) %>% 
-                 rename(PD = pd, site = sample))
+                 rename(pd.root = pd, site = sample)) # phylocom cannot ignore root
   
-  if ("try-error" %in% class(pdcomm)) {
+  if ("try-error" %in% class(pdcomm) | include.root == FALSE) {
     cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
-    pdcomm = picante::pd(comm, tree, include.root = TRUE)
+    pdcomm = picante::pd(comm, tree, include.root = include.root) %>% 
+      tibble::rownames_to_column("site") %>% rename(pd.root = PD)
   } 
   
   pdcomm = tibble::data_frame(site = row.names(comm)) %>% 
-    dplyr::left_join(pdcomm, by = "site")  # make sure the same 
+    dplyr::left_join(pdcomm, by = "site") # make sure the same 
   
   return(pdcomm)
 }
@@ -89,8 +90,9 @@ mvpd <- function(samp, dis, abundance.weighted=FALSE){
 #' @export
 #' 
 get_pd_alpha = function(samp_wide, tree, samp_long, 
-                        null.model = TRUE, null.type = 0, n.item = 999,
-                        abund.weight = TRUE, verbose = TRUE, ...){
+                        null.model = TRUE, null.type = "uniform", 
+                        abund.weight = FALSE, include.root = TRUE, 
+                        verbose = TRUE, vpd = FALSE, ...){
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
   
@@ -98,63 +100,68 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     tolower() %>% 
     stringr::str_replace_all(" ", "_") # phylocom will have trouble with space in site names
   
-  if(missing(samp_long)){
+  if(include.root & missing(samp_long)){
     samp_long = tibble::rownames_to_column(as.data.frame(samp_wide), "site") %>% 
       tidyr::gather("sp", "freq", -site) %>% filter(freq > 0) %>% 
       arrange(site, sp) %>% select(site, freq, sp)
   }
   
   # faith pd
-  faith_pd_c = try(phylocomr::ph_pd(sample = samp_long, phylo = tree) %>% 
-                     select(sample, pd, proptreebl) %>% 
-                     rename(site = sample, pd.prop = proptreebl))
-  if("try-error" %in% class(faith_pd_c)){
-    if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
-    faith_pd = picante::pd(samp_wide, tree, include.root = TRUE) %>% select(-SR) %>% 
-      tibble::rownames_to_column("site") %>% rename(pd = PD) %>% 
-      mutate(pd.prop = round(pd / sum(tree$edge.length), 3))
-    mntd_s = picante::mntd(samp_wide, dist, abundance.weighted = abund.weight)
-    if(null.model) warning("No null model enabled for picante at this moment")
-  } else{
-    # MPD and MNTD
-    if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
+  if(include.root == FALSE){
+    faith_pd = tibble::data_frame(site = row.names(samp_wide),
+                       pd.uroot = PhyloMeasures::pd.query(tree = tree, matrix = samp_wide, standardize = FALSE)
+    )
     if(null.model){
-      mpd_mntd = phylocomr::ph_comstruct(sample = samp_long, phylo = tree, 
-                                         null_model = null.type, 
-                                         randomizations = n.item, 
-                                         abundance = abund.weight)
-      mpd_mntd = select(mpd_mntd, plot, mpd, mntd, nri, nti) %>% 
-        rename(site = plot, mpd_c = mpd, mpd.z = nri, mntd.z = nti)
-    } else {
-      n.item = 0 # phylocom has no turn off of null model
-      mpd_mntd = phylocomr::ph_comstruct(sample = samp_long, phylo = tree, 
-                                         null_model = null.type, 
-                                         randomizations = n.item,
-                                         abundance = abund.weight)
-      mpd_mntd = select(mpd_mntd, plot, mpd, mntd) %>% rename(site = plot, mpd_c = mpd)
+      faith_pd$pd.uroot.z = PhyloMeasures::pd.query(tree = tree, matrix = samp_wide, standardize = TRUE, null.model = null.type)
     }
+  } else {
+    faith_pd = pd2(samp_wide, tree, include.root = TRUE) %>% select(site, pd.root)
+    if(null.model) message("null models for phylocom or picante not implement yet")
   }
   
+  # mpd
+  mpd_s = tibble::data_frame(site = row.names(samp_wide),
+                              mpd = PhyloMeasures::mpd.query(tree, samp_wide, standardize = FALSE)
+  )
+  if(null.model){
+    mpd_s$mpd.z = PhyloMeasures::mpd.query(tree = tree, matrix = samp_wide, standardize = TRUE, null.model = null.type)
+  }
+  
+  # mpd
+  mntd_s = tibble::data_frame(site = row.names(samp_wide),
+                             mntd = PhyloMeasures::mntd.query(tree, samp_wide, standardize = FALSE)
+  )
+  if(null.model){
+    mntd_s$mntd.z = PhyloMeasures::mntd.query(tree = tree, matrix = samp_wide, standardize = TRUE, null.model = null.type)
+  }
+  
+  out = left_join(faith_pd, mpd_s, by = "site") %>% left_join(mntd_s, by = "site")
+  
   # variance of pairwise distance
-  mvpd_s = mvpd(samp_wide, dist, abundance.weighted = abund.weight)
+  if(vpd) {
+    mvpd_s = mvpd(samp_wide, dist, abundance.weighted = abund.weight)
+    out = left_join(out, select(mvpd_s, -mpd), by = "site")
+  }
+  
   # PSV
   # psr_s = psr(samp, tree, compute.var = FALSE) %>% mutate(site = row.names(samp)) %>% select(-SR)
-  psv_s = picante::psv(samp_wide, tree, compute.var = FALSE) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
-  pse_s = picante::pse(samp_wide, tree) %>% mutate(site = row.names(samp_wide)) %>% select(-SR)
-  # more?
-  if("try-error" %in% class(faith_pd_c)){
-    # cat("Return results based on R /n")
-    out = purrr::reduce(list(mvpd_s, faith_pd, psv_s, pse_s), 
-                 left_join, by = "site") %>% 
-      mutate(mntd = mntd_s) %>% 
-      rename(psv = PSVs, pse = PSEs) %>%
-      tibble::rowid_to_column()
-  } else {
-    out = purrr::reduce(list(mvpd_s, faith_pd_c, mpd_mntd, psv_s, pse_s), 
-                 left_join, by = "site") %>% select(-mpd_c) %>% 
-      rename(psv = PSVs, pse = PSEs) %>% tibble::rowid_to_column()
+  psv_s = picante::psv(samp_wide, tree, compute.var = FALSE) %>% 
+    mutate(site = row.names(samp_wide)) %>% select(-SR) %>% rename(psv = PSVs)
+  out = left_join(out, psv_s, by = "site")
+  if(abund.weight){
+    pse_s = picante::pse(samp_wide, tree) %>% 
+      mutate(site = row.names(samp_wide)) %>% select(-SR) %>% rename(pse = PSEs)
+    out = left_join(out, pse_s, by = "site")
   }
-  select(out, site, rowid, pd, pd.prop, mpd, vpd, mntd, psv, pse, everything()) %>% dplyr::tbl_df()
+  
+  # species richness
+  out = vegan::specnumber(samp_wide) %>% as.data.frame() %>% setNames("sr") %>% 
+    tibble::rownames_to_column("site") %>% 
+    tibble::rowid_to_column() %>% 
+    left_join(out, by = "site") %>% 
+    select(site, rowid, sr, starts_with("pd"), mpd, mntd, psv, everything()) %>% 
+    dplyr::tbl_df()
+  out
 }
 
 # beta phylo diversity ----
@@ -621,7 +628,7 @@ phylo_betapart = function(comm, tree, index.family = "jaccard", pairwise = TRUE)
 #' 
 get_pd_beta = function(samp_wide, tree, samp_long,
                        null.model = TRUE, null.type = 0, n.item = 999,
-                       abund.weight = TRUE, get.pcd = TRUE, verbose = TRUE, ...){
+                       abund.weight = FALSE, get.pcd = TRUE, verbose = TRUE, ...){
   
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
