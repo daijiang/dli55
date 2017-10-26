@@ -4,9 +4,10 @@
 \alias{get_pd_beta}
 \title{calculate pairwise beta phylogenetic diversity}
 \usage{
-get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
-  n.item = 999, abund.weight = TRUE, get.pcd = TRUE, verbose = TRUE,
-  ...)
+get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE,
+  null.model.mpd.phylomeasure = TRUE, null.model.mntd.phylomeasure = FALSE,
+  null.type.phylocom = 0, n.item = 999, abund.weight = FALSE,
+  get.pcd = TRUE, verbose = TRUE, ...)
 }
 \arguments{
 \item{samp_wide}{wide version of samp_long, row.names are sites, colnames are species}
@@ -15,9 +16,11 @@ get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
 
 \item{samp_long}{a 3-column data frame, site, freq, sp}
 
-\item{null.model}{whether to run null models for MPD and MNTD?}
+\item{null.model}{whether to run null models for MPD and MNTD with Phylocom?}
 
-\item{null.type}{if null.model is TRUE, which null model to use?See ?phylocomr::ph_comstruct for details}
+\item{null.model.mpd.phylomeasure}{whether to run null models for MPD with PhyloMeasures?}
+
+\item{null.model.mntd.phylomeasure}{whether to run null models for MNTD with PhyloMeasures?}
 
 \item{n.item}{the number of randomization}
 
@@ -26,6 +29,8 @@ get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
 \item{get.pcd}{calculate PCD or not? Can be time consuming.}
 
 \item{verbose}{do you want to see relevant information?}
+
+\item{null.type}{if null.model is TRUE, which null model to use?See ?phylocomr::ph_comstruct for details}
 }
 \value{
 a data frame

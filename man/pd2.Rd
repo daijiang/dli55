@@ -7,7 +7,7 @@
 pd2(comm, tree, include.root = TRUE, comm_long)
 }
 \arguments{
-\item{comm}{a site by species data frame, site names as row names}
+\item{comm}{a site by species data frame, site names as row names, only works for presence/absence data}
 
 \item{tree}{a phylogeny of class "phylo"}
 

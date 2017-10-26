@@ -4,8 +4,11 @@
 \alias{get_pd_alpha}
 \title{calculate alpha phylogenetic diversity}
 \usage{
-get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
-  n.item = 999, abund.weight = TRUE, verbose = TRUE, ...)
+get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE,
+  null.model.pd.root = FALSE, null.type.phylomeasures = "uniform",
+  null.type.phylocom = 0, null.type.picante = "taxa.labels", n.item = 999,
+  abund.weight = FALSE, include.root = TRUE, verbose = TRUE,
+  vpd = FALSE, ...)
 }
 \arguments{
 \item{samp_wide}{wide version of samp_long, row.names are sites, colnames are species}
@@ -16,17 +19,32 @@ get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE, null.type = 0,
 
 \item{null.model}{whether to run null models for MPD and MNTD?}
 
-\item{null.type}{if null.model is TRUE, which null model to use?See ?phylocomr::ph_comstruct for details}
+\item{null.model.pd.root}{whether to run null models for rooted PD?}
+
+\item{null.type.phylomeasures}{if null.model is TRUE, which null model to use for PhyloMeasure?}
+
+\item{null.type.phylocom}{if null.model is TRUE, which null model to use for Phylocom? 
+- 0: phylogeny shuffle. 
+- 1: maintain site richness and draw from species actually observed in sites. 
+- 2: maintain site richness and draw from the phylogeny
+- 3: independent swap. 
+See ?phylocomr::ph_comstruct for details}
+
+\item{null.type.picante}{if null.model is TRUE, which null model to use for Picante? Not used yet.}
 
 \item{n.item}{the number of randomization}
 
-\item{abund.weight}{should abundance information used when calculating pd?}
+\item{abund.weight}{should abundance information used when calculating pd? Default is FALSE}
 
 \item{verbose}{do you want to see relevant information?}
+
+\item{vpd}{to calculate vpd (varance of pairwise distance) or not?}
 }
 \value{
 a data frame
 }
 \description{
 A function to calculate a bunch of phylo diversity: Faith's PD, MPD, VPD (variance of pairwise distance), MNTD, PSV/PSE.
+Results of MPD/MNTD from PhyloMeasures are equal with those from Phylocom/Picante with abundance.weight = FALSE
+Results of PD from PhyloMeasures are unrooted; PD from Phylocom are rooted.
 }
