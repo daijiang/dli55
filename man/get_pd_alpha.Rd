@@ -4,11 +4,10 @@
 \alias{get_pd_alpha}
 \title{calculate alpha phylogenetic diversity}
 \usage{
-get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE,
-  null.model.pd.root = FALSE, null.type.phylomeasures = "uniform",
+get_pd_alpha(samp_wide, tree, samp_long, null.model.phylomeasures = TRUE,
+  null.model.phylocom = FALSE, null.type.phylomeasures = "uniform",
   null.type.phylocom = 0, null.type.picante = "taxa.labels", n.item = 999,
-  abund.weight = FALSE, include.root = TRUE, verbose = TRUE,
-  vpd = FALSE, ...)
+  abund.weight = FALSE, verbose = TRUE, vpd = FALSE, ...)
 }
 \arguments{
 \item{samp_wide}{wide version of samp_long, row.names are sites, colnames are species}
@@ -16,10 +15,6 @@ get_pd_alpha(samp_wide, tree, samp_long, null.model = TRUE,
 \item{tree}{a phylogeny with class of 'phylo'}
 
 \item{samp_long}{a 3-column data frame, site, freq, sp}
-
-\item{null.model}{whether to run null models for MPD and MNTD?}
-
-\item{null.model.pd.root}{whether to run null models for rooted PD?}
 
 \item{null.type.phylomeasures}{if null.model is TRUE, which null model to use for PhyloMeasure?}
 
@@ -34,11 +29,15 @@ See ?phylocomr::ph_comstruct for details}
 
 \item{n.item}{the number of randomization}
 
-\item{abund.weight}{should abundance information used when calculating pd? Default is FALSE}
+\item{abund.weight}{should abundance information used when calculating pd with Phylocom/Picante? Default is FALSE}
 
 \item{verbose}{do you want to see relevant information?}
 
 \item{vpd}{to calculate vpd (varance of pairwise distance) or not?}
+
+\item{null.model}{whether to run null models for MPD and MNTD?}
+
+\item{null.model.pd.root}{whether to run null models for rooted PD?}
 }
 \value{
 a data frame

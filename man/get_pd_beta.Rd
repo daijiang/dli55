@@ -4,10 +4,12 @@
 \alias{get_pd_beta}
 \title{calculate pairwise beta phylogenetic diversity}
 \usage{
-get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE,
-  null.model.mpd.phylomeasure = TRUE, null.model.mntd.phylomeasure = FALSE,
+get_pd_beta(samp_wide, tree, samp_long, get.unif = TRUE, get.mpd = TRUE,
+  get.mntd = TRUE, get.pcd = TRUE, null.model.phylocom = TRUE,
   null.type.phylocom = 0, n.item = 999, abund.weight = FALSE,
-  get.pcd = TRUE, verbose = TRUE, ...)
+  null.model.mpd.phylomeasures = TRUE,
+  null.model.mntd.phylomeasures = FALSE, verbose = TRUE,
+  verbose.mntd.null = FALSE, ...)
 }
 \arguments{
 \item{samp_wide}{wide version of samp_long, row.names are sites, colnames are species}
@@ -16,21 +18,29 @@ get_pd_beta(samp_wide, tree, samp_long, null.model = TRUE,
 
 \item{samp_long}{a 3-column data frame, site, freq, sp}
 
-\item{null.model}{whether to run null models for MPD and MNTD with Phylocom?}
+\item{get.unif}{whether to calculate pairwise UniFrac}
 
-\item{null.model.mpd.phylomeasure}{whether to run null models for MPD with PhyloMeasures?}
+\item{get.mpd}{whether to calculate pairwise mpd_beta}
 
-\item{null.model.mntd.phylomeasure}{whether to run null models for MNTD with PhyloMeasures?}
-
-\item{n.item}{the number of randomization}
-
-\item{abund.weight}{should abundance information used when calculating pd?}
+\item{get.mntd}{whether to calculate pairwise mntd_beta}
 
 \item{get.pcd}{calculate PCD or not? Can be time consuming.}
 
+\item{null.model.phylocom}{whether to run null models for MPD and MNTD with Phylocom?}
+
+\item{null.type.phylocom}{if null.model.phylocom is TRUE, which null model to use? See ?phylocomr::ph_comstruct for details}
+
+\item{n.item}{the number of randomization with Phylocom}
+
+\item{abund.weight}{should abundance information used when calculating MPD/MNTD with Phylocom? Note: mntd_beta with Phylocom seems not reliable.}
+
+\item{null.model.mpd.phylomeasures}{whether to run null models for MPD with PhyloMeasures?}
+
+\item{null.model.mntd.phylomeasures}{whether to run null models for MNTD with PhyloMeasures?}
+
 \item{verbose}{do you want to see relevant information?}
 
-\item{null.type}{if null.model is TRUE, which null model to use?See ?phylocomr::ph_comstruct for details}
+\item{verbose.mntd.null}{do you want to see relevant information about null models of MNTD with PhyloMeasures?}
 }
 \value{
 a data frame

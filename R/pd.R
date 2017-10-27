@@ -95,18 +95,18 @@ mvpd <- function(samp, dis, abundance.weighted=FALSE){
 #' See ?phylocomr::ph_comstruct for details
 #' @param null.type.picante if null.model is TRUE, which null model to use for Picante? Not used yet. 
 #' @param n.item the number of randomization
-#' @param abund.weight should abundance information used when calculating pd? Default is FALSE
+#' @param abund.weight should abundance information used when calculating pd with Phylocom/Picante? Default is FALSE
 #' @param verbose do you want to see relevant information?
 #' @param vpd to calculate vpd (varance of pairwise distance) or not?
 #' @return a data frame
 #' @export
 #' 
 get_pd_alpha = function(samp_wide, tree, samp_long, 
-                        null.model = TRUE, null.model.pd.root = FALSE,
+                        null.model.phylomeasures = TRUE, null.model.phylocom = FALSE,
                         null.type.phylomeasures = "uniform", 
                         null.type.phylocom = 0, null.type.picante = "taxa.labels",
                         n.item = 999,
-                        abund.weight = FALSE, include.root = TRUE, 
+                        abund.weight = FALSE, 
                         verbose = TRUE, vpd = FALSE, ...){
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
@@ -126,14 +126,14 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     faith_pd = tibble::data_frame(site = row.names(samp_wide),
                        pd.uroot = PhyloMeasures::pd.query(tree = tree, matrix = samp_wide, standardize = FALSE)
     )
-    if(null.model){
+    if(null.model.phylomeasures){
       faith_pd$pd.uroot.z = PhyloMeasures::pd.query(tree = tree, matrix = samp_wide, 
                                                     standardize = TRUE, 
                                                     null.model = null.type.phylomeasures)
     }
   # rooted pd
     faith_pd2 = pd2(samp_wide, tree, include.root = TRUE) %>% select(site, pd.root)
-    if(null.model.pd.root) {
+    if(null.model.phylocom) {
       message("no analytical null model for rooted pd calculated with phylocom/picante yet.")
       pd_z = purrr::map(1:n.item, function(x){
         set.seed(x)
@@ -153,7 +153,7 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     out = left_join(faith_pd, faith_pd2, by = "site")
   # mpd and mntd
   if(abund.weight){ # PhyloMeasures cannot weight by abundance, use Phylocom or Picante
-    if(null.model){
+    if(null.model.phylocom){
       mpd_mntd = try(phylocomr::ph_comstruct(sample = samp_long, phylo = tree, 
                                          null_model = null.type.phylocom, 
                                          randomizations = n.item, 
@@ -192,7 +192,7 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     mpd_s = tibble::data_frame(site = row.names(samp_wide),
                                mpd = PhyloMeasures::mpd.query(tree, samp_wide, standardize = FALSE)
     )
-    if(null.model){
+    if(null.model.phylomeasures){
       mpd_s$mpd.z = PhyloMeasures::mpd.query(tree = tree, matrix = samp_wide, 
                                              standardize = TRUE, 
                                              null.model = null.type.phylomeasures)
@@ -201,7 +201,7 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
     mntd_s = tibble::data_frame(site = row.names(samp_wide),
                                 mntd = PhyloMeasures::mntd.query(tree, samp_wide, standardize = FALSE)
     )
-    if(null.model){
+    if(null.model.phylomeasures){
       mntd_s$mntd.z = PhyloMeasures::mntd.query(tree = tree, matrix = samp_wide, 
                                                 standardize = TRUE, 
                                                 null.model = null.type.phylomeasures)
@@ -691,23 +691,28 @@ phylo_betapart = function(comm, tree, index.family = "jaccard", pairwise = TRUE)
 #' @param samp_wide wide version of samp_long, row.names are sites, colnames are species
 #' @param tree a phylogeny with class of 'phylo'
 #' @param samp_long a 3-column data frame, site, freq, sp
-#' @param null.model whether to run null models for MPD and MNTD with Phylocom?
-#' @param null.model.mpd.phylomeasure whether to run null models for MPD with PhyloMeasures?
-#' @param null.model.mntd.phylomeasure whether to run null models for MNTD with PhyloMeasures?
-#' @param null.type if null.model is TRUE, which null model to use?See ?phylocomr::ph_comstruct for details
-#' @param n.item the number of randomization
-#' @param abund.weight should abundance information used when calculating pd?
+#' @param get.unif whether to calculate pairwise UniFrac
+#' @param get.mpd whether to calculate pairwise mpd_beta
+#' @param get.mntd whether to calculate pairwise mntd_beta
 #' @param get.pcd calculate PCD or not? Can be time consuming.
+#' @param null.model.phylocom whether to run null models for MPD and MNTD with Phylocom?
+#' @param null.type.phylocom if null.model.phylocom is TRUE, which null model to use? See ?phylocomr::ph_comstruct for details
+#' @param n.item the number of randomization with Phylocom
+#' @param abund.weight should abundance information used when calculating MPD/MNTD with Phylocom? Note: mntd_beta with Phylocom seems not reliable.
+#' @param null.model.mpd.phylomeasures whether to run null models for MPD with PhyloMeasures?
+#' @param null.model.mntd.phylomeasures whether to run null models for MNTD with PhyloMeasures?
 #' @param verbose do you want to see relevant information?
+#' @param verbose.mntd.null do you want to see relevant information about null models of MNTD with PhyloMeasures?
 #' @return a data frame
 #' @export
 #' 
 get_pd_beta = function(samp_wide, tree, samp_long,
-                       null.model = TRUE, null.model.mpd.phylomeasure = TRUE,
-                       null.model.mntd.phylomeasure = FALSE,
-                       null.type.phylocom = 0, n.item = 999,
-                       abund.weight = FALSE, get.pcd = TRUE, verbose = TRUE, ...){
-  
+                       get.unif = TRUE, get.mpd = TRUE, get.mntd = TRUE, get.pcd = TRUE, 
+                       null.model.phylocom = TRUE, null.type.phylocom = 0, 
+                       n.item = 999, abund.weight = FALSE,
+                       null.model.mpd.phylomeasures = TRUE,
+                       null.model.mntd.phylomeasures = FALSE,
+                       verbose = TRUE, verbose.mntd.null = FALSE, ...){
   if(length(class(tree)) > 1 & "phylo" %in% class(tree)) class(tree) = "phylo"
   dist = cophenetic(tree)
   
@@ -715,86 +720,107 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     tolower() %>% 
     stringr::str_replace_all(" ", "_") # phylocom will have trouble with space in site names
   
-  if(missing(samp_long)){
+  if(missing(samp_long) & abund.weight){
     samp_long = tibble::rownames_to_column(as.data.frame(samp_wide), "site") %>% 
       tidyr::gather("sp", "freq", -site) %>% filter(freq > 0) %>% 
       arrange(site, sp) %>% select(site, freq, sp)
   }
   
-  # unifrac: jaccard phylo dissimilarity, only works with presence/absence data
-  # unif = unifrac2(samp_wide, tree, samp_long)
-  # unif = as.matrix(unif)
-  phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard", pairwise = TRUE) # false won't work here
-  if(verbose) cat("Done with phylo_betapart, Unifrac", "\n")
-  unif = as.matrix(phy_beta$phylo.beta.jac)
-  unif_turnover = as.matrix(phy_beta$phylo.beta.jtu)
-  unif_nested = as.matrix(phy_beta$phylo.beta.jne)
+  if(get.unif){
+    # unifrac: jaccard phylo dissimilarity, only works with presence/absence data
+    # unif = unifrac2(samp_wide, tree, samp_long)
+    # unif = as.matrix(unif)
+    phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard", pairwise = TRUE) # false won't work here
+    if(verbose) cat("Done with phylo_betapart, Unifrac", "\n")
+    unif = as.matrix(phy_beta$phylo.beta.jac)
+    unif_turnover = as.matrix(phy_beta$phylo.beta.jtu)
+    unif_nested = as.matrix(phy_beta$phylo.beta.jne)
+  }
   
-  # comdist: mpd 
-  if(abund.weight){ # weight with abundance, use Phylocom or picante
-    mpd_beta_c = try(phylocomr::ph_comdist(samp_long, tree, rand_test = null.model, 
-                                           null_model = null.type.phylocom, randomizations = n.item, 
-                                           abundance = TRUE))
-    # convert tibble to matrix
-    to_m = function(tb){
-      mpd_beta = as.data.frame(tb)
-      row.names(mpd_beta) = mpd_beta$name; mpd_beta$name = NULL
-      mpd_beta = as.matrix(mpd_beta)
-      mpd_beta
-    }
-    
-    if("try-error" %in% class(mpd_beta_c)){
-      if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
-      mpd_beta = picante::comdist(samp_wide, dist, abundance.weighted = TRUE)
-      mpd_beta = as.matrix(mpd_beta)
-      mntd_beta = picante::comdistnt(samp_wide, dist, abundance.weighted = TRUE)
-      mntd_beta = as.matrix(mntd_beta)
-      message("null models for mpd_beta and mntd_beta with picante is too slow, ignored.")
-    } else {# good with phylocomr
-      if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
-      # mntd_beta: phylocom is not reliable, it seems messed with abundance data with binary data; 
-      # and the abundance control does not work well.
-      mntd_beta_c = phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model, 
-                                            null_model = null.type.phylocom, randomizations = n.item, 
-                                            abundance = abund.weight)
-      if(null.model){
-        mpd_beta = to_m(mpd_beta_c$obs)
-        mntd_beta = to_m(mntd_beta_c$obs)
-        mpd_beta_z = to_m(mpd_beta_c$NRI_or_NTI) * (-1)
-        mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * (-1)
+  # convert tibble to matrix
+  to_m = function(tb){
+    mpd_beta = as.data.frame(tb)
+    row.names(mpd_beta) = mpd_beta$name; mpd_beta$name = NULL
+    mpd_beta = as.matrix(mpd_beta)
+    mpd_beta
+  }
+  
+  # mpd_beta
+  if(get.mpd){
+    if(abund.weight){# weight with abundance, use Phylocom or picante
+      mpd_beta_c = try(phylocomr::ph_comdist(samp_long, tree, rand_test = null.model.phylocom, 
+                                             null_model = null.type.phylocom, randomizations = n.item, 
+                                             abundance = TRUE))
+      phylocom_trouble = "try-error" %in% class(mpd_beta_c)
+      if(phylocom_trouble){
+        if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+        mpd_beta = picante::comdist(samp_wide, dist, abundance.weighted = TRUE)
+        mpd_beta = as.matrix(mpd_beta)
+        message("null models for mpd_beta with picante is too slow, ignored.")
       } else {
-        mpd_beta = to_m(mpd_beta_c)
-        mntd_beta = to_m(mntd_beta_c) 
+        if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
+        if(null.model.phylocom){
+          mpd_beta = to_m(mpd_beta_c$obs)
+          mpd_beta_z = to_m(mpd_beta_c$NRI_or_NTI) * (-1)
+        } else {
+          mpd_beta = to_m(mpd_beta_c)
+        }
+      }
+    } else { # presence/absence, use PhyloMeasures
+      mpd_beta = PhyloMeasures::cd.query(tree, samp_wide, standardize = FALSE)
+      rownames(mpd_beta) = row.names(samp_wide)
+      colnames(mpd_beta) = row.names(samp_wide)
+      if(null.model.mpd.phylomeasures){
+        mpd_beta_z = PhyloMeasures::cd.query(tree, samp_wide, standardize = TRUE)
+        rownames(mpd_beta_z) = row.names(samp_wide)
+        colnames(mpd_beta_z) = row.names(samp_wide)
       }
     }
-    
-  } else { # PhyloMeasures only work with presence/absence data for mpd_beta and mntd_beta
-    mpd_beta = PhyloMeasures::cd.query(tree, samp_wide)
-    rownames(mpd_beta) = row.names(samp_wide)
-    colnames(mpd_beta) = row.names(samp_wide)
-    mntd_beta = PhyloMeasures::cdnt.averaged.query(tree, samp_wide)
-    rownames(mntd_beta) = row.names(samp_wide)
-    colnames(mntd_beta) = row.names(samp_wide)
-    if(null.model.mpd.phylomeasure){
-      mpd_beta_z = PhyloMeasures::cd.query(tree, samp_wide, standardize = TRUE)
-      rownames(mpd_beta_z) = row.names(samp_wide)
-      colnames(mpd_beta_z) = row.names(samp_wide)
-      if(null.model.mntd.phylomeasure){
-      mntd_beta_z = purrr::map(1:n.item, function(x){
-        set.seed(x)
-        if(verbose) cat("null model of mntd_beta", x, "\t")
-        x2 = PhyloMeasures::cdnt.averaged.query(picante::tipShuffle(tree), samp_wide)
-        rownames(x2) = row.names(samp_wide)
-        colnames(x2) = row.names(samp_wide)
-        x2
-      })
-      mntd_beta_z = array(unlist(mntd_beta_z), dim = c(nrow(samp_wide), nrow(samp_wide), n.item))
-      mntd_zz_mean = apply(mntd_beta_z, MARGIN = c(1, 2), mean, na.rm = T)
-      mntd_zz_sd = apply(mntd_beta_z, MARGIN = c(1, 2), sd, na.rm = T)
-      diag(mntd_zz_sd) = 1
-      mntd_beta_z = (mntd_beta - mntd_zz_mean)/mntd_zz_sd
+    if(verbose) cat("Done with mpd_beta", "\n")
+  }
+  
+  # mntd_beta
+  if(get.mntd){
+    if(abund.weight){# weight with abundance, use Phylocom or picante
+      mntd_beta_c = try(phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model.phylocom, 
+                                             null_model = null.type.phylocom, randomizations = n.item, 
+                                             abundance = TRUE))
+      phylocom_trouble = "try-error" %in% class(mntd_beta_c)
+      if(phylocom_trouble){
+        if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+        mntd_beta = picante::comdistnt(samp_wide, dist, abundance.weighted = TRUE)
+        mntd_beta = as.matrix(mntd_beta)
+        message("null models for mntd_beta with picante is too slow, ignored.")
+      } else {
+        if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
+        if(null.model.phylocom){
+          mntd_beta = to_m(mntd_beta_c$obs)
+          mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * (-1)
+        } else {
+          mntd_beta = to_m(mntd_beta_c)
+        }
+      }
+    } else { # presence/absence, use PhyloMeasures
+      mntd_beta = PhyloMeasures::cdnt.averaged.query(tree, samp_wide)
+      rownames(mntd_beta) = row.names(samp_wide)
+      colnames(mntd_beta) = row.names(samp_wide)
+      if(null.model.mntd.phylomeasures){
+        mntd_beta_z = purrr::map(1:n.item, function(x){
+          set.seed(x)
+          if(verbose.mntd.null) cat("null model of mntd_beta", x, "\t")
+          x2 = PhyloMeasures::cdnt.averaged.query(picante::tipShuffle(tree), samp_wide)
+          rownames(x2) = row.names(samp_wide)
+          colnames(x2) = row.names(samp_wide)
+          x2
+        })
+        mntd_beta_z = array(unlist(mntd_beta_z), dim = c(nrow(samp_wide), nrow(samp_wide), n.item))
+        mntd_zz_mean = apply(mntd_beta_z, MARGIN = c(1, 2), mean, na.rm = T)
+        mntd_zz_sd = apply(mntd_beta_z, MARGIN = c(1, 2), sd, na.rm = T)
+        diag(mntd_zz_sd) = 1
+        mntd_beta_z = (mntd_beta - mntd_zz_mean)/mntd_zz_sd
       }
     }
+    if(verbose) cat("Done with mntd_beta", "\n")
   }
   
   # pcd
@@ -803,28 +829,29 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     PCD = as.matrix(pcd_beta$PCD)
     PCDc = as.matrix(pcd_beta$PCDc)
     PCDp = as.matrix(pcd_beta$PCDp)
+    if(verbose) cat("Done with PCD", "\n")
   }
   
   # clean outputs
   out = tibble::as_data_frame(t(combn(row.names(samp_wide), 2))) %>% 
     rename(site1 = V1, site2 = V2)
-  if(get.pcd){
+  if(get.unif){
     out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
-                 unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
-                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y]),
-                 mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]),
-                 mntd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta[.x, .y]),
-                 pcd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCD[.x, .y]),
-                 pcdc_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCDc[.x, .y]),
-                 pcdp_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCDp[.x, .y]))
-  } else {
-    out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
-                 mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]),
-                 mntd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta[.x, .y]),
                  unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
                  unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y]))
   }
-  
+  if(get.mpd){
+    out = mutate(out, mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]))
+  }
+  if(get.mntd){
+    out = mutate(out, mntd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta[.x, .y]))
+  }
+  if(get.pcd){
+    out = mutate(out, 
+                 pcd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCD[.x, .y]),
+                 pcdc_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCDc[.x, .y]),
+                 pcdp_beta = purrr::map2_dbl(.x = site1, .y = site2, ~PCDp[.x, .y]))
+  }
   if(exists("mpd_beta_z")){
     out = mutate(out, 
                  mpd_beta_z = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta_z[.x, .y]))
