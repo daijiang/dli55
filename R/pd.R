@@ -727,11 +727,15 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     # unifrac: jaccard phylo dissimilarity, only works with presence/absence data
     # unif = unifrac2(samp_wide, tree, samp_long)
     # unif = as.matrix(unif)
-    phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard", pairwise = TRUE) # false won't work here
+    phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard")
     if(verbose) cat("Done with phylo_betapart, Unifrac", "\n")
-    unif = as.matrix(phy_beta$phylo.beta.jac)
-    unif_turnover = as.matrix(phy_beta$phylo.beta.jtu)
-    unif_nested = as.matrix(phy_beta$phylo.beta.jne)
+    unif = as.matrix(phy_beta$out_pair$phylo.beta.jac)
+    unif_turnover = as.matrix(phy_beta$out_pair$phylo.beta.jtu)
+    unif_nested = as.matrix(phy_beta$out_pair$phylo.beta.jne)
+    
+    unif_multi = phy_beta$out_multi$phylo.beta.JAC
+    unif_turnover_multi = phy_beta$out_multi$phylo.beta.JTU
+    unif_nested_multi = phy_beta$out_multi$phylo.beta.JNE
   }
   
   # convert tibble to matrix
@@ -835,7 +839,9 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   if(get.unif){
     out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
                  unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
-                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y]))
+                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y])) %>% 
+      bind_rows(data_frame(site1 = "multi_sites", site2 = "multi_sites", unif = unif_multi, 
+               unif_turnover = unif_turnover_multi, unif_nested = unif_nested_multi))
   }
   if(get.mpd){
     out = mutate(out, mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]))
