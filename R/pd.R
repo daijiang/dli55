@@ -836,13 +836,7 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   # clean outputs
   out = tibble::as_data_frame(t(combn(row.names(samp_wide), 2))) %>% 
     rename(site1 = V1, site2 = V2)
-  if(get.unif){
-    out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
-                 unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
-                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y])) %>% 
-      bind_rows(data_frame(site1 = "multi_sites", site2 = "multi_sites", unif = unif_multi, 
-               unif_turnover = unif_turnover_multi, unif_nested = unif_nested_multi))
-  }
+  
   if(get.mpd){
     out = mutate(out, mpd_beta = purrr::map2_dbl(.x = site1, .y = site2, ~mpd_beta[.x, .y]))
   }
@@ -863,6 +857,12 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     out = mutate(out, 
                  mntd_beta_z = purrr::map2_dbl(.x = site1, .y = site2, ~mntd_beta_z[.x, .y]))
   }
-  
+  if(get.unif){
+    out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
+                 unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
+                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y])) %>% 
+      bind_rows(data_frame(site1 = "multi_sites", site2 = "multi_sites", unif = unif_multi, 
+                           unif_turnover = unif_turnover_multi, unif_nested = unif_nested_multi))
+  }
   return(out)
 }
