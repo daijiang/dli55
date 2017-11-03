@@ -565,17 +565,18 @@ unifrac2 <- function(comm, tree, comm_long) {
 
 #' Phylogenetic beta diversity partition
 #' 
-#' Calculate Phylogenetic beta diversity and its partition, adapted from betapart::phylo.belt.xx()
+#' Calculate Phylogenetic beta diversity and its partition, adapted from betapart::phylo.belt.xx(). Since the pairwise and multisie version
+#' share the same core computation process, it makes more sense to return both. Then we can choose which one to use.
 #' 
 #' @param comm a site by species data frame, site names as row names
 #' @param tree a phylogeny of class "phylo"
 #' @param index.family "jaccard" or "sorensen"
-#' @param pairwise calculate pairwise beta diversity or multisite beta diversity
-#' @return a list of three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
+#' @return a list of two: pairwise beta and multisite beta. Pairwise beta has three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
 #' For sorensen, phylo.beta.sim is the turnover part measured as Simpson derived pairwise dissimilarity, phylo.beta.sne is the nestedness-fraction.
+#' Similarly for the multisite version.
 #' @export
 #'
-phylo_betapart = function(comm, tree, index.family = "jaccard", pairwise = TRUE){
+phylo_betapart = function(comm = dat_1, tree, index.family = "jaccard"){
   # adapted from betaprt::phylo.beta
   index.family <- match.arg(index.family, c("jaccard", "sorensen"))
   
@@ -590,7 +591,7 @@ phylo_betapart = function(comm, tree, index.family = "jaccard", pairwise = TRUE)
     warning("The community matrix contains values other than 0 and 1: trying to convert data to presence/absence.", call. = TRUE)
     comm[comm > 1] = 1
   }
-    
+  
   if (class(tree)!="phylo")
     stop("### invalid tree's format: \"phylo\" format required ###\n\n", call. = TRUE)
   if(any(!(colnames(comm)%in%tree$tip)))
@@ -641,47 +642,43 @@ phylo_betapart = function(comm, tree, index.family = "jaccard", pairwise = TRUE)
   max.not.shared = dist.mat(comm, max.not.shared)
   min.not.shared = dist.mat(comm, min.not.shared)
   
-  if(pairwise == FALSE){
-    com.tot.multi <- 1 * t(as.matrix(colSums(comm)>0))
-    rownames(com.tot.multi) = "all"
-    pd.tot.multi <- as.numeric(pd2(com.tot.multi,tree)[,"PD"])  # PD of all communities combined
-    St = pd.tot.multi
-  }
+  com.tot.multi <- 1 * t(as.matrix(colSums(comm)>0))
+  rownames(com.tot.multi) = "all"
+  pd.tot.multi <- as.numeric(pd2(com.tot.multi,tree)[,"pd.root"])  # PD of all communities combined
+  St = pd.tot.multi
   
+  switch(index.family, 
+         sorensen = {
+           phylo.beta.sim <- min.not.shared/(min.not.shared + shared)
+           phylo.beta.sne <- ((max.not.shared - min.not.shared)/((2 * shared) + sum.not.shared)) * (shared/(min.not.shared + shared))
+           phylo.beta.sor <- sum.not.shared/(2 * shared + sum.not.shared)
+           out_pair <- list(phylo.beta.sim = phylo.beta.sim, phylo.beta.sne = phylo.beta.sne, phylo.beta.sor = phylo.beta.sor)
+         },
+         jaccard = {
+           phylo.beta.jtu <- (2 * min.not.shared)/((2 * min.not.shared) + shared)
+           phylo.beta.jne <- ((max.not.shared - min.not.shared)/(shared + sum.not.shared)) * (shared/((2 * min.not.shared) + shared))
+           phylo.beta.jac <- sum.not.shared/(shared + sum.not.shared)
+           out_pair <- list(phylo.beta.jtu = phylo.beta.jtu, phylo.beta.jne = phylo.beta.jne, phylo.beta.jac = phylo.beta.jac)
+         }
+  ) 
+  # multi sites
+  switch(index.family, 
+         sorensen = {
+           phylo.beta.SIM <- sum(min.not.shared)/(sumSi - St + sum(min.not.shared))
+           phylo.beta.SNE <- ((sum(max.not.shared) - sum(min.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))) * ((sumSi - St)/(sumSi - St + sum(min.not.shared)))
+           phylo.beta.SOR <- (sum(min.not.shared) + sum(max.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))
+           out_multi <- list(phylo.beta.SIM = phylo.beta.SIM, phylo.beta.SNE = phylo.beta.SNE, phylo.beta.SOR = phylo.beta.SOR)
+         },
+         jaccard = {
+           phylo.beta.JTU <- (2 * sum(min.not.shared))/((2 * sum(min.not.shared)) + sumSi - St)
+           phylo.beta.JNE <- ((sum(max.not.shared) - sum(min.not.shared))/(sumSi - St + sum(max.not.shared) + sum(min.not.shared))) * ((sumSi - St)/(2 * sum(min.not.shared) + sumSi - St))
+           phylo.beta.JAC <- (sum(min.not.shared) + sum(max.not.shared))/(sumSi - St + sum(min.not.shared) + sum(max.not.shared))
+           out_multi <- list(phylo.beta.JTU = phylo.beta.JTU, phylo.beta.JNE = phylo.beta.JNE, phylo.beta.JAC = phylo.beta.JAC)
+         }
+  )
   
-  if(pairwise){
-    switch(index.family, 
-           sorensen = {
-             phylo.beta.sim <- min.not.shared/(min.not.shared + shared)
-             phylo.beta.sne <- ((max.not.shared - min.not.shared)/((2 * shared) + sum.not.shared)) * (shared/(min.not.shared + shared))
-             phylo.beta.sor <- sum.not.shared/(2 * shared + sum.not.shared)
-             out <- list(phylo.beta.sim = phylo.beta.sim, phylo.beta.sne = phylo.beta.sne, phylo.beta.sor = phylo.beta.sor)
-           },
-           jaccard = {
-             phylo.beta.jtu <- (2 * min.not.shared)/((2 * min.not.shared) + shared)
-             phylo.beta.jne <- ((max.not.shared - min.not.shared)/(shared + sum.not.shared)) * (shared/((2 * min.not.shared) + shared))
-             phylo.beta.jac <- sum.not.shared/(shared + sum.not.shared)
-             out <- list(phylo.beta.jtu = phylo.beta.jtu, phylo.beta.jne = phylo.beta.jne, phylo.beta.jac = phylo.beta.jac)
-           }
-    ) # end of switch
-  } else { # multi sites
-    switch(index.family, 
-           sorensen = {
-             phylo.beta.SIM <- sum(min.not.shared)/(sumSi - St + sum(min.not.shared))
-             phylo.beta.SNE <- ((sum(max.not.shared) - sum(min.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))) * ((sumSi - St)/(sumSi - St + sum(min.not.shared)))
-             phylo.beta.SOR <- (sum(min.not.shared) + sum(max.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))
-             out <- list(phylo.beta.SIM = phylo.beta.SIM, phylo.beta.SNE = phylo.beta.SNE, phylo.beta.SOR = phylo.beta.SOR)
-           },
-           jaccard = {
-             phylo.beta.JTU <- (2 * sum(min.not.shared))/((2 * sum(min.not.shared)) + sumSi - St)
-             phylo.beta.JNE <- ((sum(max.not.shared) - sum(min.not.shared))/(sumSi - St + sum(max.not.shared) + sum(min.not.shared))) * ((sumSi - St)/(2 * sum(min.not.shared) + sumSi - St))
-             phylo.beta.JAC <- (sum(min.not.shared) + sum(max.not.shared))/(sumSi - St + sum(min.not.shared) + sum(max.not.shared))
-             out <- list(phylo.beta.JTU = phylo.beta.JTU, phylo.beta.JNE = phylo.beta.JNE, phylo.beta.JAC = phylo.beta.JAC)
-           }
-    )
-  }
-  return(out)
-} 
+  return(list(out_pair = out_pair, out_multi = out_multi))
+}
 
 #' calculate pairwise beta phylogenetic diversity
 #' 

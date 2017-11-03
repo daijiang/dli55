@@ -4,7 +4,7 @@
 \alias{phylo_betapart}
 \title{Phylogenetic beta diversity partition}
 \usage{
-phylo_betapart(comm, tree, index.family = "jaccard", pairwise = TRUE)
+phylo_betapart(comm = dat_1, tree, index.family = "jaccard")
 }
 \arguments{
 \item{comm}{a site by species data frame, site names as row names}
@@ -12,13 +12,13 @@ phylo_betapart(comm, tree, index.family = "jaccard", pairwise = TRUE)
 \item{tree}{a phylogeny of class "phylo"}
 
 \item{index.family}{"jaccard" or "sorensen"}
-
-\item{pairwise}{calculate pairwise beta diversity or multisite beta diversity}
 }
 \value{
-a list of three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
+a list of two: pairwise beta and multisite beta. Pairwise beta has three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
 For sorensen, phylo.beta.sim is the turnover part measured as Simpson derived pairwise dissimilarity, phylo.beta.sne is the nestedness-fraction.
+Similarly for the multisite version.
 }
 \description{
-Calculate Phylogenetic beta diversity and its partition, adapted from betapart::phylo.belt.xx()
+Calculate Phylogenetic beta diversity and its partition, adapted from betapart::phylo.belt.xx(). Since the pairwise and multisie version
+share the same core computation process, it makes more sense to return both. Then we can choose which one to use.
 }
