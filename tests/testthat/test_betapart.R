@@ -6,11 +6,11 @@ tree = ape::read.tree("../../data/phy.tre")
 tol = 0.0001
 
 test_that("testing phylo_betapart and betapart::phylo.beta.pair", {
-  expect_equal(phylo_betapart(x, tree, "jaccard")$out_pair, betapart::phylo.beta.pair(x, tree, "jaccard"), tolerance = tol)
-  expect_equal(phylo_betapart(x, tree, "sorensen")$out_pair, betapart::phylo.beta.pair(x, tree, "sorensen"), tolerance = tol)
-  expect_equal(phylo_betapart(x, tree)$out_pair$phylo.beta.jac, unifrac2(x, tree), tolerance = tol, check.attributes = F)
-  expect_equal(phylo_betapart(x, tree)$out_multi, betapart::phylo.beta.multi(x, tree, "jaccard"), tolerance = tol)
-  expect_equal(phylo_betapart(x, tree, "sorensen")$out_multi, betapart::phylo.beta.multi(x, tree), tolerance = tol)
+  expect_equal(phylo_betapart(x, tree)$out_pair_jaccard, betapart::phylo.beta.pair(x, tree, "jaccard"), tolerance = tol)
+  expect_equal(phylo_betapart(x, tree)$out_pair_sorensen, betapart::phylo.beta.pair(x, tree, "sorensen"), tolerance = tol)
+  expect_equal(phylo_betapart(x, tree)$out_pair_jaccard$phylo.beta.jac, unifrac2(x, tree), tolerance = tol, check.attributes = F)
+  expect_equal(phylo_betapart(x, tree)$out_multi_jaccard, betapart::phylo.beta.multi(x, tree, "jaccard"), tolerance = tol)
+  expect_equal(phylo_betapart(x, tree)$out_multi_sorensen, betapart::phylo.beta.multi(x, tree), tolerance = tol)
 })
 
 # test_that("testing whether get_pd_beta works or not", {
