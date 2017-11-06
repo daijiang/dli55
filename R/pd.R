@@ -217,11 +217,11 @@ get_pd_alpha = function(samp_wide, tree, samp_long,
   
   # PSV
   # psr_s = psr(samp, tree, compute.var = FALSE) %>% mutate(site = row.names(samp)) %>% select(-SR)
-  psv_s = picante::psv(samp_wide, tree, compute.var = FALSE) %>% 
+  psv_s = picante::psv(samp_wide, ape::vcv(tree, corr = T), compute.var = FALSE) %>% 
     mutate(site = row.names(samp_wide)) %>% select(-SR) %>% rename(psv = PSVs)
   out = left_join(out, psv_s, by = "site")
   if(abund.weight){
-    pse_s = picante::pse(samp_wide, tree) %>% 
+    pse_s = picante::pse(samp_wide, ape::vcv(tree, corr = T)) %>% 
       mutate(site = row.names(samp_wide)) %>% select(-SR) %>% rename(pse = PSEs)
     out = left_join(out, pse_s, by = "site")
   }
