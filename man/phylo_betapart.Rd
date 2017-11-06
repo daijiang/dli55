@@ -4,17 +4,16 @@
 \alias{phylo_betapart}
 \title{Phylogenetic beta diversity partition}
 \usage{
-phylo_betapart(comm = dat_1, tree, index.family = "jaccard")
+phylo_betapart(comm = dat_1, tree)
 }
 \arguments{
 \item{comm}{a site by species data frame, site names as row names}
 
 \item{tree}{a phylogeny of class "phylo"}
-
-\item{index.family}{"jaccard" or "sorensen"}
 }
 \value{
-a list of two: pairwise beta and multisite beta. Pairwise beta has three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
+a list of four: pairwise beta of jaccard and sorense; and multisite beta of jaccard and sorensen.
+Pairwise beta has three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
 For sorensen, phylo.beta.sim is the turnover part measured as Simpson derived pairwise dissimilarity, phylo.beta.sne is the nestedness-fraction.
 Similarly for the multisite version.
 }
