@@ -8,6 +8,7 @@ Maintainer: Daijiang Li <daijianglee@gmail.com>
 Description: To keep all my functions in one place, and to use them more easily.
 License: MIT + file LICENSE
 Encoding: UTF-8
+LazyData: yes
 Depends: R (>= 3.0), stats, utils, methods
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp, RcppArmadillo

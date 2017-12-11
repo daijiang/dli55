@@ -1,8 +1,7 @@
 context("test partitioning of phylogenetic beta diversity")
 
-x = read.csv("../../data/li_2015_old.csv", row.names = 1, check.names = F)
+x = comm_a
 x[x > 1] = 1
-tree = ape::read.tree("../../data/phy.tre")
 tol = 0.0001
 
 test_that("testing phylo_betapart and betapart::phylo.beta.pair", {
