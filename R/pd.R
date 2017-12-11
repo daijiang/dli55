@@ -570,15 +570,14 @@ unifrac2 <- function(comm, tree, comm_long) {
 #' 
 #' @param comm a site by species data frame, site names as row names
 #' @param tree a phylogeny of class "phylo"
-#' @param index.family "jaccard" or "sorensen"
-#' @return a list of two: pairwise beta and multisite beta. Pairwise beta has three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
+#' @return a list of four: pairwise beta of jaccard and sorense; and multisite beta of jaccard and sorensen.
+#' Pairwise beta has three distance matrix. For jaccard, phylo.beta.jtu is the turnover-fraction of Jaccard, phylo.beta.jne is the nestedness-fraction.
 #' For sorensen, phylo.beta.sim is the turnover part measured as Simpson derived pairwise dissimilarity, phylo.beta.sne is the nestedness-fraction.
 #' Similarly for the multisite version.
 #' @export
 #'
-phylo_betapart = function(comm = dat_1, tree, index.family = "jaccard"){
+phylo_betapart = function(comm = dat_1, tree){
   # adapted from betaprt::phylo.beta
-  index.family <- match.arg(index.family, c("jaccard", "sorensen"))
   
   if (!is.matrix(comm)) {
     comm <- as.matrix(comm)
@@ -647,37 +646,29 @@ phylo_betapart = function(comm = dat_1, tree, index.family = "jaccard"){
   pd.tot.multi <- as.numeric(pd2(com.tot.multi,tree)[,"pd.root"])  # PD of all communities combined
   St = pd.tot.multi
   
-  switch(index.family, 
-         sorensen = {
-           phylo.beta.sim <- min.not.shared/(min.not.shared + shared)
-           phylo.beta.sne <- ((max.not.shared - min.not.shared)/((2 * shared) + sum.not.shared)) * (shared/(min.not.shared + shared))
-           phylo.beta.sor <- sum.not.shared/(2 * shared + sum.not.shared)
-           out_pair <- list(phylo.beta.sim = phylo.beta.sim, phylo.beta.sne = phylo.beta.sne, phylo.beta.sor = phylo.beta.sor)
-         },
-         jaccard = {
-           phylo.beta.jtu <- (2 * min.not.shared)/((2 * min.not.shared) + shared)
-           phylo.beta.jne <- ((max.not.shared - min.not.shared)/(shared + sum.not.shared)) * (shared/((2 * min.not.shared) + shared))
-           phylo.beta.jac <- sum.not.shared/(shared + sum.not.shared)
-           out_pair <- list(phylo.beta.jtu = phylo.beta.jtu, phylo.beta.jne = phylo.beta.jne, phylo.beta.jac = phylo.beta.jac)
-         }
-  ) 
-  # multi sites
-  switch(index.family, 
-         sorensen = {
-           phylo.beta.SIM <- sum(min.not.shared)/(sumSi - St + sum(min.not.shared))
-           phylo.beta.SNE <- ((sum(max.not.shared) - sum(min.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))) * ((sumSi - St)/(sumSi - St + sum(min.not.shared)))
-           phylo.beta.SOR <- (sum(min.not.shared) + sum(max.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))
-           out_multi <- list(phylo.beta.SIM = phylo.beta.SIM, phylo.beta.SNE = phylo.beta.SNE, phylo.beta.SOR = phylo.beta.SOR)
-         },
-         jaccard = {
-           phylo.beta.JTU <- (2 * sum(min.not.shared))/((2 * sum(min.not.shared)) + sumSi - St)
-           phylo.beta.JNE <- ((sum(max.not.shared) - sum(min.not.shared))/(sumSi - St + sum(max.not.shared) + sum(min.not.shared))) * ((sumSi - St)/(2 * sum(min.not.shared) + sumSi - St))
-           phylo.beta.JAC <- (sum(min.not.shared) + sum(max.not.shared))/(sumSi - St + sum(min.not.shared) + sum(max.not.shared))
-           out_multi <- list(phylo.beta.JTU = phylo.beta.JTU, phylo.beta.JNE = phylo.beta.JNE, phylo.beta.JAC = phylo.beta.JAC)
-         }
-  )
+  phylo.beta.sim <- min.not.shared/(min.not.shared + shared)
+  phylo.beta.sne <- ((max.not.shared - min.not.shared)/((2 * shared) + sum.not.shared)) * (shared/(min.not.shared + shared))
+  phylo.beta.sor <- sum.not.shared/(2 * shared + sum.not.shared)
+  out_pair_sorensen <- list(phylo.beta.sim = phylo.beta.sim, phylo.beta.sne = phylo.beta.sne, phylo.beta.sor = phylo.beta.sor)
   
-  return(list(out_pair = out_pair, out_multi = out_multi))
+  phylo.beta.jtu <- (2 * min.not.shared)/((2 * min.not.shared) + shared)
+  phylo.beta.jne <- ((max.not.shared - min.not.shared)/(shared + sum.not.shared)) * (shared/((2 * min.not.shared) + shared))
+  phylo.beta.jac <- sum.not.shared/(shared + sum.not.shared)
+  out_pair_jaccard <- list(phylo.beta.jtu = phylo.beta.jtu, phylo.beta.jne = phylo.beta.jne, phylo.beta.jac = phylo.beta.jac)
+  
+  # multi sites
+  phylo.beta.SIM <- sum(min.not.shared)/(sumSi - St + sum(min.not.shared))
+  phylo.beta.SNE <- ((sum(max.not.shared) - sum(min.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))) * ((sumSi - St)/(sumSi - St + sum(min.not.shared)))
+  phylo.beta.SOR <- (sum(min.not.shared) + sum(max.not.shared))/(2 * (sumSi - St) + sum(min.not.shared) + sum(max.not.shared))
+  out_multi_sorensen <- list(phylo.beta.SIM = phylo.beta.SIM, phylo.beta.SNE = phylo.beta.SNE, phylo.beta.SOR = phylo.beta.SOR)
+  
+  phylo.beta.JTU <- (2 * sum(min.not.shared))/((2 * sum(min.not.shared)) + sumSi - St)
+  phylo.beta.JNE <- ((sum(max.not.shared) - sum(min.not.shared))/(sumSi - St + sum(max.not.shared) + sum(min.not.shared))) * ((sumSi - St)/(2 * sum(min.not.shared) + sumSi - St))
+  phylo.beta.JAC <- (sum(min.not.shared) + sum(max.not.shared))/(sumSi - St + sum(min.not.shared) + sum(max.not.shared))
+  out_multi_jaccard <- list(phylo.beta.JTU = phylo.beta.JTU, phylo.beta.JNE = phylo.beta.JNE, phylo.beta.JAC = phylo.beta.JAC)
+  
+  return(list(out_pair_jaccard = out_pair_jaccard, out_pair_sorensen = out_pair_sorensen,
+              out_multi_jaccard = out_multi_jaccard, out_multi_sorensen = out_multi_sorensen))
 }
 
 #' calculate pairwise beta phylogenetic diversity
@@ -727,15 +718,23 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     # unifrac: jaccard phylo dissimilarity, only works with presence/absence data
     # unif = unifrac2(samp_wide, tree, samp_long)
     # unif = as.matrix(unif)
-    phy_beta = phylo_betapart(samp_wide, tree, index.family = "jaccard")
+    phy_beta = phylo_betapart(samp_wide, tree)
     if(verbose) cat("Done with phylo_betapart, Unifrac", "\n")
-    unif = as.matrix(phy_beta$out_pair$phylo.beta.jac)
-    unif_turnover = as.matrix(phy_beta$out_pair$phylo.beta.jtu)
-    unif_nested = as.matrix(phy_beta$out_pair$phylo.beta.jne)
+    unif = as.matrix(phy_beta$out_pair_jaccard$phylo.beta.jac)
+    unif_turnover = as.matrix(phy_beta$out_pair_jaccard$phylo.beta.jtu)
+    unif_nested = as.matrix(phy_beta$out_pair_jaccard$phylo.beta.jne)
     
-    unif_multi = phy_beta$out_multi$phylo.beta.JAC
-    unif_turnover_multi = phy_beta$out_multi$phylo.beta.JTU
-    unif_nested_multi = phy_beta$out_multi$phylo.beta.JNE
+    unif_multi = phy_beta$out_multi_jaccard$phylo.beta.JAC
+    unif_turnover_multi = phy_beta$out_multi_jaccard$phylo.beta.JTU
+    unif_nested_multi = phy_beta$out_multi_jaccard$phylo.beta.JNE
+    
+    psor = as.matrix(phy_beta$out_pair_sorensen$phylo.beta.sor)
+    psor_turnover = as.matrix(phy_beta$out_pair_sorensen$phylo.beta.sim)
+    psor_nested = as.matrix(phy_beta$out_pair_sorensen$phylo.beta.sne)
+    
+    psor_multi = phy_beta$out_multi_sorensen$phylo.beta.SOR
+    psor_turnover_multi = phy_beta$out_multi_sorensen$phylo.beta.SIM
+    psor_nested_multi = phy_beta$out_multi_sorensen$phylo.beta.SNE
   }
   
   # convert tibble to matrix
@@ -784,8 +783,8 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   if(get.mntd){
     if(abund.weight){# weight with abundance, use Phylocom or picante
       mntd_beta_c = try(phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model.phylocom, 
-                                             null_model = null.type.phylocom, randomizations = n.item, 
-                                             abundance = TRUE))
+                                                null_model = null.type.phylocom, randomizations = n.item, 
+                                                abundance = TRUE))
       phylocom_trouble = "try-error" %in% class(mntd_beta_c)
       if(phylocom_trouble){
         if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
@@ -860,9 +859,14 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   if(get.unif){
     out = mutate(out, unif = purrr::map2_dbl(.x = site1, .y = site2, ~unif[.x, .y]),
                  unif_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~unif_turnover[.x, .y]),
-                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y])) %>% 
+                 unif_nested = purrr::map2_dbl(.x = site1, .y = site2, ~unif_nested[.x, .y]),
+                 psor = purrr::map2_dbl(.x = site1, .y = site2, ~psor[.x, .y]),
+                 psor_turnover = purrr::map2_dbl(.x = site1, .y = site2, ~psor_turnover[.x, .y]),
+                 psor_nested = purrr::map2_dbl(.x = site1, .y = site2, ~psor_nested[.x, .y])) %>% 
       bind_rows(data_frame(site1 = "multi_sites", site2 = "multi_sites", unif = unif_multi, 
-                           unif_turnover = unif_turnover_multi, unif_nested = unif_nested_multi))
+                           unif_turnover = unif_turnover_multi, unif_nested = unif_nested_multi,
+                           psor = psor_multi, 
+                           psor_turnover = psor_turnover_multi, psor_nested = psor_nested_multi))
   }
   return(out)
 }
