@@ -708,7 +708,7 @@ get_pd_beta = function(samp_wide, tree, samp_long,
     tolower() %>% 
     stringr::str_replace_all(" ", "_") # phylocom will have trouble with space in site names
   
-  if(missing(samp_long) & abund.weight){
+  if(missing(samp_long)){
     samp_long = tibble::rownames_to_column(as.data.frame(samp_wide), "site") %>% 
       tidyr::gather("sp", "freq", -site) %>% filter(freq > 0) %>% 
       arrange(site, sp) %>% select(site, freq, sp)
@@ -781,43 +781,61 @@ get_pd_beta = function(samp_wide, tree, samp_long,
   
   # mntd_beta
   if(get.mntd){
-    if(abund.weight){# weight with abundance, use Phylocom or picante
-      mntd_beta_c = try(phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model.phylocom, 
-                                                null_model = null.type.phylocom, randomizations = n.item, 
-                                                abundance = TRUE))
-      phylocom_trouble = "try-error" %in% class(mntd_beta_c)
-      if(phylocom_trouble){
-        if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
-        mntd_beta = picante::comdistnt(samp_wide, dist, abundance.weighted = TRUE)
-        mntd_beta = as.matrix(mntd_beta)
-        message("null models for mntd_beta with picante is too slow, ignored.")
+    # if(abund.weight){# weight with abundance, use Phylocom or picante
+    #   mntd_beta_c = try(phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model.phylocom, 
+    #                                             null_model = null.type.phylocom, randomizations = n.item, 
+    #                                             abundance = TRUE))
+    #   phylocom_trouble = "try-error" %in% class(mntd_beta_c)
+    #   if(phylocom_trouble){
+    #     if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+    #     mntd_beta = picante::comdistnt(samp_wide, dist, abundance.weighted = TRUE)
+    #     mntd_beta = as.matrix(mntd_beta)
+    #     message("null models for mntd_beta with picante is too slow, ignored.")
+    #   } else {
+    #     if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
+    #     if(null.model.phylocom){
+    #       mntd_beta = to_m(mntd_beta_c$obs)
+    #       mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * (-1)
+    #     } else {
+    #       mntd_beta = to_m(mntd_beta_c)
+    #     }
+    #   }
+    # } else { # presence/absence, use PhyloMeasures
+    #   mntd_beta = PhyloMeasures::cdnt.averaged.query(tree, samp_wide)
+    #   rownames(mntd_beta) = row.names(samp_wide)
+    #   colnames(mntd_beta) = row.names(samp_wide)
+    #   if(null.model.mntd.phylomeasures){
+    #     mntd_beta_z = purrr::map(1:n.item, function(x){
+    #       set.seed(x)
+    #       if(verbose.mntd.null) cat("null model of mntd_beta", x, "\t")
+    #       x2 = PhyloMeasures::cdnt.averaged.query(picante::tipShuffle(tree), samp_wide)
+    #       rownames(x2) = row.names(samp_wide)
+    #       colnames(x2) = row.names(samp_wide)
+    #       x2
+    #     })
+    #     mntd_beta_z = array(unlist(mntd_beta_z), dim = c(nrow(samp_wide), nrow(samp_wide), n.item))
+    #     mntd_zz_mean = apply(mntd_beta_z, MARGIN = c(1, 2), mean, na.rm = T)
+    #     mntd_zz_sd = apply(mntd_beta_z, MARGIN = c(1, 2), sd, na.rm = T)
+    #     diag(mntd_zz_sd) = 1
+    #     mntd_beta_z = (mntd_beta - mntd_zz_mean)/mntd_zz_sd
+    #   }
+    # }
+    mntd_beta_c = try(phylocomr::ph_comdistnt(samp_long, tree, rand_test = null.model.phylocom, 
+                                              null_model = null.type.phylocom, randomizations = n.item, 
+                                              abundance = abund.weight))
+    phylocom_trouble = "try-error" %in% class(mntd_beta_c)
+    if(phylocom_trouble){
+      if(verbose) cat("Phylocom has trouble with this phlyogney, switch to picante", "\n")
+      mntd_beta = picante::comdistnt(samp_wide, dist, abundance.weighted = abund.weight)
+      mntd_beta = as.matrix(mntd_beta)
+      message("null models for mntd_beta with picante is too slow, ignored.")
+    } else {
+      if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
+      if(null.model.phylocom){
+        mntd_beta = to_m(mntd_beta_c$obs)
+        mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * (-1)
       } else {
-        if(verbose) cat("Phylocom has no trouble with this phylogeny ", "\n")
-        if(null.model.phylocom){
-          mntd_beta = to_m(mntd_beta_c$obs)
-          mntd_beta_z = to_m(mntd_beta_c$NRI_or_NTI) * (-1)
-        } else {
-          mntd_beta = to_m(mntd_beta_c)
-        }
-      }
-    } else { # presence/absence, use PhyloMeasures
-      mntd_beta = PhyloMeasures::cdnt.averaged.query(tree, samp_wide)
-      rownames(mntd_beta) = row.names(samp_wide)
-      colnames(mntd_beta) = row.names(samp_wide)
-      if(null.model.mntd.phylomeasures){
-        mntd_beta_z = purrr::map(1:n.item, function(x){
-          set.seed(x)
-          if(verbose.mntd.null) cat("null model of mntd_beta", x, "\t")
-          x2 = PhyloMeasures::cdnt.averaged.query(picante::tipShuffle(tree), samp_wide)
-          rownames(x2) = row.names(samp_wide)
-          colnames(x2) = row.names(samp_wide)
-          x2
-        })
-        mntd_beta_z = array(unlist(mntd_beta_z), dim = c(nrow(samp_wide), nrow(samp_wide), n.item))
-        mntd_zz_mean = apply(mntd_beta_z, MARGIN = c(1, 2), mean, na.rm = T)
-        mntd_zz_sd = apply(mntd_beta_z, MARGIN = c(1, 2), sd, na.rm = T)
-        diag(mntd_zz_sd) = 1
-        mntd_beta_z = (mntd_beta - mntd_zz_mean)/mntd_zz_sd
+        mntd_beta = to_m(mntd_beta_c)
       }
     }
     if(verbose) cat("Done with mntd_beta", "\n")
